@@ -1,34 +1,49 @@
+import {
+  AIDifficulty,
+  CardColor,
+  GameDirection,
+  GamePhase,
+  PlayerType
+} from '../types';
 import { Card } from './Card';
 import { Deck } from './Deck';
 import { Player } from './Player';
-import { 
-  GameState, 
-  GamePhase, 
-  GameDirection, 
-  CardColor,
-  PlayerType,
-  AIDifficulty 
-} from '../types';
+
+/**
+ * 游戏引擎内部状态接口
+ */
+interface InternalGameState {
+  phase: GamePhase;
+  currentPlayerId: string;
+  direction: GameDirection;
+  currentCard: any;
+  drawStack: number;
+  selectedColor: CardColor | null;
+  players: any[];
+  winner: any;
+  roundNumber: number;
+  gameStartTime: number;
+}
 
 /**
  * UNO游戏引擎
  * 管理游戏的完整流程和规则
  */
 export class GameEngine {
-  private gameState: GameState;
+  private gameState: InternalGameState;
   private deck: Deck;
   private discardPile: Card[] = [];
   private players: Player[] = [];
   private currentPlayerIndex: number = 0;
-  private direction: GameDirection = 'clockwise';
+  private direction: GameDirection = GameDirection.CLOCKWISE;
   private drawStack: number = 0; // 累积的抽牌数量
   private selectedColor: CardColor | null = null; // 万能牌选择的颜色
 
   constructor() {
     this.gameState = {
-      phase: 'waiting',
+      phase: GamePhase.SETUP,
       currentPlayerId: '',
-      direction: 'clockwise',
+      direction: GameDirection.CLOCKWISE,
       currentCard: null,
       drawStack: 0,
       selectedColor: null,
@@ -76,7 +91,7 @@ export class GameEngine {
     this.startFirstCard();
 
     // 设置游戏状态
-    this.gameState.phase = 'playing';
+    this.gameState.phase = GamePhase.PLAYING;
     this.gameState.players = this.players.map(p => p.toJSON());
     this.currentPlayerIndex = 0;
     this.gameState.currentPlayerId = this.players[0].id;
@@ -132,7 +147,7 @@ export class GameEngine {
    * 玩家出牌
    */
   playCard(playerId: string, cardId: string, selectedColor?: CardColor): boolean {
-    if (this.gameState.phase !== 'playing') {
+    if (this.gameState.phase !== GamePhase.PLAYING) {
       return false;
     }
 
@@ -201,7 +216,7 @@ export class GameEngine {
     this.updateGameState();
 
     // 下一个玩家
-    if (this.gameState.phase === 'playing') {
+    if (this.gameState.phase === GamePhase.PLAYING) {
       this.nextPlayer();
     }
 
@@ -236,7 +251,7 @@ export class GameEngine {
    * 玩家抽牌
    */
   drawCard(playerId: string): boolean {
-    if (this.gameState.phase !== 'playing') {
+    if (this.gameState.phase !== GamePhase.PLAYING) {
       return false;
     }
 
@@ -289,7 +304,7 @@ export class GameEngine {
    * 下一个玩家
    */
   private nextPlayer(): void {
-    if (this.direction === 'clockwise') {
+    if (this.direction === GameDirection.CLOCKWISE) {
       this.currentPlayerIndex = (this.currentPlayerIndex + 1) % this.players.length;
     } else {
       this.currentPlayerIndex = (this.currentPlayerIndex - 1 + this.players.length) % this.players.length;
@@ -302,7 +317,7 @@ export class GameEngine {
    * 反转方向
    */
   private reverseDirection(): void {
-    this.direction = this.direction === 'clockwise' ? 'counterclockwise' : 'clockwise';
+    this.direction = this.direction === GameDirection.CLOCKWISE ? GameDirection.COUNTERCLOCKWISE : GameDirection.CLOCKWISE;
     this.gameState.direction = this.direction;
   }
 
@@ -333,7 +348,7 @@ export class GameEngine {
    * 结束游戏
    */
   private endGame(winner: Player): void {
-    this.gameState.phase = 'finished';
+    this.gameState.phase = GamePhase.FINISHED;
     this.gameState.winner = winner.toJSON();
     
     // 计算分数
@@ -386,7 +401,7 @@ export class GameEngine {
   /**
    * 获取游戏状态
    */
-  getGameState(): GameState {
+  getGameState(): InternalGameState {
     return { ...this.gameState };
   }
 
@@ -401,7 +416,7 @@ export class GameEngine {
    * 检查玩家是否可以出牌
    */
   canPlayerPlay(playerId: string): boolean {
-    if (this.gameState.phase !== 'playing') {
+    if (this.gameState.phase !== GamePhase.PLAYING) {
       return false;
     }
 
@@ -458,14 +473,14 @@ export class GameEngine {
     this.deck = new Deck();
     this.discardPile = [];
     this.currentPlayerIndex = 0;
-    this.direction = 'clockwise';
+    this.direction = GameDirection.CLOCKWISE;
     this.drawStack = 0;
     this.selectedColor = null;
     
     this.gameState = {
-      phase: 'waiting',
+      phase: GamePhase.SETUP,
       currentPlayerId: '',
-      direction: 'clockwise',
+      direction: GameDirection.CLOCKWISE,
       currentCard: null,
       drawStack: 0,
       selectedColor: null,
@@ -504,7 +519,7 @@ export class GameEngine {
     // 重置游戏状态
     this.drawStack = 0;
     this.selectedColor = null;
-    this.gameState.phase = 'playing';
+    this.gameState.phase = GamePhase.PLAYING;
     this.gameState.roundNumber++;
     this.gameState.winner = null;
     this.gameState.drawStack = 0;

@@ -1,5 +1,5 @@
 import { Card } from './Card';
-import { CardColor } from '../types';
+import { CardColor, CardType } from '../types';
 import { shuffleArray } from '../utils/shuffleUtils';
 
 /**
@@ -18,43 +18,43 @@ export class Deck {
    */
   static createStandardDeck(): Deck {
     const cards: Card[] = [];
-    const colors: CardColor[] = ['red', 'yellow', 'green', 'blue'];
+    const colors: CardColor[] = [CardColor.RED, CardColor.YELLOW, CardColor.GREEN, CardColor.BLUE];
 
     // 数字牌：每种颜色0-9，0只有1张，1-9每张2张
     colors.forEach(color => {
       // 0牌：每种颜色1张
-      cards.push(new Card('number', color, 0));
+      cards.push(new Card(CardType.NUMBER, color, 0));
       
       // 1-9牌：每种颜色每个数字2张
       for (let num = 1; num <= 9; num++) {
-        cards.push(new Card('number', color, num));
-        cards.push(new Card('number', color, num));
+        cards.push(new Card(CardType.NUMBER, color, num));
+        cards.push(new Card(CardType.NUMBER, color, num));
       }
     });
 
     // 功能牌：每种颜色每种功能牌2张
     colors.forEach(color => {
       // 跳过牌
-      cards.push(new Card('skip', color));
-      cards.push(new Card('skip', color));
+      cards.push(new Card(CardType.SKIP, color));
+      cards.push(new Card(CardType.SKIP, color));
       
       // 反转牌
-      cards.push(new Card('reverse', color));
-      cards.push(new Card('reverse', color));
+      cards.push(new Card(CardType.REVERSE, color));
+      cards.push(new Card(CardType.REVERSE, color));
       
       // +2牌
-      cards.push(new Card('draw_two', color));
-      cards.push(new Card('draw_two', color));
+      cards.push(new Card(CardType.DRAW_TWO, color));
+      cards.push(new Card(CardType.DRAW_TWO, color));
     });
 
     // 万能牌：4张
     for (let i = 0; i < 4; i++) {
-      cards.push(new Card('wild'));
+      cards.push(new Card(CardType.WILD));
     }
 
     // 万能+4牌：4张
     for (let i = 0; i < 4; i++) {
-      cards.push(new Card('wild_draw_four'));
+      cards.push(new Card(CardType.WILD_DRAW_FOUR));
     }
 
     return new Deck(cards);
@@ -166,7 +166,7 @@ export class Deck {
     // 重置万能牌的颜色
     const resetCards = cardsToRefill.map(card => {
       if (card.isWildCard()) {
-        return new Card(card.type, null, card.value);
+        return new Card(card.type, CardColor.WILD, card.value);
       }
       return card.clone();
     });

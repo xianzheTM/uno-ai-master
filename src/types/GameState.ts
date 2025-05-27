@@ -53,29 +53,20 @@ export interface GameState {
   turnCount: number;
 }
 
-/**
- * 游戏设置接口
- */
+// 以下类型为未来功能预留，目前未使用
+// 如果需要实现游戏设置、历史记录等功能，可以取消注释
+
+/*
 export interface GameSettings {
-  /** 玩家数量 */
   playerCount: number;
-  /** AI玩家数量 */
   aiPlayerCount: number;
-  /** 初始手牌数量 */
   initialHandSize: number;
-  /** 是否启用音效 */
   soundEnabled: boolean;
-  /** 是否启用动画 */
   animationEnabled: boolean;
-  /** AI思考时间（毫秒） */
   aiThinkingTime: number;
-  /** 是否启用UNO规则检查 */
   unoRuleEnabled: boolean;
 }
 
-/**
- * 游戏动作类型
- */
 export enum GameActionType {
   PLAY_CARD = 'play_card',
   DRAW_CARD = 'draw_card',
@@ -88,44 +79,24 @@ export enum GameActionType {
   RESUME_GAME = 'resume_game'
 }
 
-/**
- * 游戏动作接口
- */
 export interface GameAction {
-  /** 动作类型 */
   type: GameActionType;
-  /** 执行动作的玩家ID */
   playerId: string;
-  /** 相关卡牌 */
   card?: Card;
-  /** 选择的颜色 */
   chosenColor?: CardColor;
-  /** 动作时间戳 */
   timestamp: Date;
 }
 
-/**
- * 游戏历史记录
- */
 export interface GameHistory {
-  /** 游戏ID */
   gameId: string;
-  /** 所有动作记录 */
   actions: GameAction[];
-  /** 最终结果 */
   result: GameResult;
 }
 
-/**
- * 游戏结果接口
- */
 export interface GameResult {
-  /** 获胜者 */
   winner: Player;
-  /** 最终分数 */
   finalScores: Record<string, number>;
-  /** 游戏时长（毫秒） */
   duration: number;
-  /** 总回合数 */
   totalTurns: number;
-} 
+}
+*/ 

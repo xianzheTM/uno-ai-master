@@ -1,5 +1,5 @@
 import { Card } from './Card';
-import { Player as PlayerType, PlayerType as PlayerTypeEnum, AIDifficulty } from '../types';
+import { Player as PlayerType, PlayerType as PlayerTypeEnum, AIDifficulty, PlayerStatus } from '../types';
 
 /**
  * UNO玩家类
@@ -13,6 +13,8 @@ export class Player implements PlayerType {
   public hand: Card[] = [];
   public hasCalledUno: boolean = false;
   public score: number = 0;
+  public readonly isAI: boolean;
+  public status: PlayerStatus = PlayerStatus.WAITING;
 
   constructor(
     id: string,
@@ -24,6 +26,7 @@ export class Player implements PlayerType {
     this.name = name;
     this.type = type;
     this.aiDifficulty = aiDifficulty;
+    this.isAI = type === PlayerTypeEnum.AI;
   }
 
   /**
@@ -158,17 +161,10 @@ export class Player implements PlayerType {
   }
 
   /**
-   * 检查是否为AI玩家
-   */
-  isAI(): boolean {
-    return this.type === 'ai';
-  }
-
-  /**
    * 检查是否为人类玩家
    */
   isHuman(): boolean {
-    return this.type === 'human';
+    return this.type === PlayerTypeEnum.HUMAN;
   }
 
   /**
@@ -298,7 +294,9 @@ export class Player implements PlayerType {
       aiDifficulty: this.aiDifficulty,
       hand: this.hand.map(card => card.toJSON()),
       hasCalledUno: this.hasCalledUno,
-      score: this.score
+      score: this.score,
+      isAI: this.isAI,
+      status: this.status
     };
   }
 

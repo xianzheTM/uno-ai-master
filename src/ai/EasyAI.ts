@@ -46,7 +46,7 @@ export class EasyAI extends AIStrategy {
     const selectedCard = hand[cardIndex];
 
     let chosenColor: CardColor | undefined;
-    if (selectedCard.isWild()) {
+    if (selectedCard.isWildCard()) {
       chosenColor = this.chooseColor(hand, gameState);
     }
 
@@ -62,9 +62,9 @@ export class EasyAI extends AIStrategy {
   /**
    * 选择颜色（万能牌）
    */
-  chooseColor(hand: Card[], gameState: GameStateInfo): CardColor {
+  chooseColor(hand: Card[], _gameState: GameStateInfo): CardColor {
     // 统计手牌中各颜色的数量
-    const colorCounts: Record<CardColor, number> = {
+    const colorCounts = {
       [CardColor.RED]: 0,
       [CardColor.YELLOW]: 0,
       [CardColor.GREEN]: 0,
@@ -73,8 +73,8 @@ export class EasyAI extends AIStrategy {
 
     // 只统计非万能牌的颜色
     for (const card of hand) {
-      if (!card.isWild()) {
-        const color = card.getColor();
+      if (!card.isWildCard()) {
+        const color = card.color;
         if (color !== CardColor.WILD) {
           colorCounts[color]++;
         }
@@ -105,7 +105,13 @@ export class EasyAI extends AIStrategy {
    * 是否应该叫UNO
    */
   shouldCallUno(hand: Card[], gameState: GameStateInfo): boolean {
-    // 简单AI在手牌剩余2张时叫UNO
-    return hand.length === 2;
+    // 简单AI在手牌剩余2张且有可出牌时叫UNO
+    if (hand.length !== 2) {
+      return false;
+    }
+    
+    // 检查是否有可打出的牌
+    const validIndices = this.getValidCardIndices(hand, gameState.currentCard, gameState.currentColor);
+    return validIndices.length > 0;
   }
 } 

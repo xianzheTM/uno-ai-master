@@ -4,7 +4,7 @@ import { MediumAI } from './MediumAI';
 import { HardAI } from './HardAI';
 import { Card } from '../game/Card';
 import { Player } from '../game/Player';
-import { GameDifficulty } from '../types/GameState';
+import { AIDifficulty } from '../types';
 
 /**
  * AI管理器
@@ -20,17 +20,17 @@ export class AIManager {
    * @param difficulty 难度级别
    * @returns AI策略实例
    */
-  createAI(playerId: string, difficulty: GameDifficulty): AIStrategy {
+  createAI(playerId: string, difficulty: AIDifficulty): AIStrategy {
     let aiInstance: AIStrategy;
 
     switch (difficulty) {
-      case GameDifficulty.EASY:
+      case AIDifficulty.EASY:
         aiInstance = new EasyAI(playerId);
         break;
-      case GameDifficulty.MEDIUM:
+      case AIDifficulty.MEDIUM:
         aiInstance = new MediumAI(playerId);
         break;
-      case GameDifficulty.HARD:
+      case AIDifficulty.HARD:
         aiInstance = new HardAI(playerId);
         break;
       default:
@@ -66,9 +66,10 @@ export class AIManager {
    * @param playerId 玩家ID
    * @param hand 手牌
    * @param gameState 游戏状态
+   * @param skipDelay 是否跳过思考延迟（用于测试）
    * @returns AI决策
    */
-  async makeDecision(playerId: string, hand: Card[], gameState: GameStateInfo): Promise<AIDecision | null> {
+  async makeDecision(playerId: string, hand: Card[], gameState: GameStateInfo, skipDelay: boolean = false): Promise<AIDecision | null> {
     const ai = this.getAI(playerId);
     if (!ai) {
       console.warn(`AI not found for player: ${playerId}`);
@@ -76,8 +77,10 @@ export class AIManager {
     }
 
     try {
-      // 添加思考延迟
-      await ai['addThinkingDelay']();
+      // 添加思考延迟（测试时可跳过）
+      if (!skipDelay) {
+        await ai['addThinkingDelay']();
+      }
 
       // 做出决策
       const decision = ai.makeDecision(hand, gameState);
@@ -223,10 +226,10 @@ export class AIManager {
    * @param players 玩家列表
    * @param difficulty 难度级别
    */
-  createAIsForPlayers(players: Player[], difficulty: GameDifficulty): void {
+  createAIsForPlayers(players: Player[], difficulty: AIDifficulty): void {
     for (const player of players) {
-      if (player.isAI()) {
-        this.createAI(player.getId(), difficulty);
+      if (player.isAI) {
+        this.createAI(player.id, difficulty);
       }
     }
   }

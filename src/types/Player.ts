@@ -53,9 +53,10 @@ export enum PlayerStatus {
   FINISHED = 'finished'
 }
 
-/**
- * 创建玩家参数
- */
+// 以下类型为未来功能预留，目前未使用
+// 如果需要实现玩家创建参数和统计功能，可以取消注释
+
+/*
 export interface CreatePlayerParams {
   name: string;
   type: PlayerType;
@@ -63,18 +64,11 @@ export interface CreatePlayerParams {
   avatar?: string;
 }
 
-/**
- * 玩家统计信息
- */
 export interface PlayerStats {
-  /** 总游戏次数 */
   totalGames: number;
-  /** 胜利次数 */
   wins: number;
-  /** 胜率 */
   winRate: number;
-  /** 平均分数 */
   averageScore: number;
-  /** 最高分 */
   highestScore: number;
-} 
+}
+*/ 

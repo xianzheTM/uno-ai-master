@@ -7,10 +7,10 @@ import { Card as CardType, CardColor, CardType as CardTypeEnum } from '../types'
 export class Card implements CardType {
   public readonly id: string;
   public readonly type: CardTypeEnum;
-  public readonly color: CardColor | null;
-  public readonly value: string | number | null;
+  public readonly color: CardColor;
+  public readonly value?: number;
 
-  constructor(type: CardTypeEnum, color: CardColor | null = null, value: string | number | null = null) {
+  constructor(type: CardTypeEnum, color: CardColor = CardColor.WILD, value?: number) {
     this.type = type;
     this.color = color;
     this.value = value;
@@ -22,7 +22,7 @@ export class Card implements CardType {
    */
   private generateId(): string {
     const typeStr = this.type;
-    const colorStr = this.color || 'wild';
+    const colorStr = this.color;
     const valueStr = this.value?.toString() || 'none';
     return `${typeStr}-${colorStr}-${valueStr}-${Math.random().toString(36).substr(2, 9)}`;
   }
@@ -47,11 +47,9 @@ export class Card implements CardType {
     }
 
     // 相同数字或类型可以出
-    if (this.type === targetCard.type && this.value === targetCard.value) {
-      return true;
-    }
+    return this.type === targetCard.type && this.value === targetCard.value;
 
-    return false;
+
   }
 
   /**
@@ -81,7 +79,7 @@ export class Card implements CardType {
   getPoints(): number {
     switch (this.type) {
       case 'number':
-        return typeof this.value === 'number' ? this.value : 0;
+        return this.value ?? 0;
       case 'skip':
       case 'reverse':
       case 'draw_two':
@@ -111,7 +109,7 @@ export class Card implements CardType {
     };
 
     const typeName = typeNames[this.type as keyof typeof typeNames] || this.type;
-    return this.color ? `${this.color} ${typeName}` : typeName;
+    return this.color === CardColor.WILD ? typeName : `${this.color} ${typeName}`;
   }
 
   /**

@@ -1,6 +1,6 @@
 import { AIStrategy, AIDecision, GameStateInfo } from './AIStrategy';
-import { Card } from '../game/Card';
-import { CardColor, CardValue } from '../types/Card';
+import { Card } from '@/game';
+import { CardColor, CardType } from '@/types';
 
 /**
  * 中等AI策略
@@ -57,7 +57,7 @@ export class MediumAI extends AIStrategy {
     const bestCard = cardEvaluations[0];
     let chosenColor: CardColor | undefined;
 
-    if (bestCard.card.isWild()) {
+    if (bestCard.card.isWildCard()) {
       chosenColor = this.chooseColor(hand, gameState);
     }
 
@@ -82,7 +82,7 @@ export class MediumAI extends AIStrategy {
     }
 
     // 万能牌额外加分
-    if (card.isWild()) {
+    if (card.isWildCard()) {
       value += this.evaluateWildCard(card, hand, gameState, threatLevel);
     }
 
@@ -94,10 +94,10 @@ export class MediumAI extends AIStrategy {
 
     // 如果对手威胁很高，优先使用攻击性卡牌
     if (threatLevel > 50) {
-      if (card.getValue() === CardValue.SKIP || 
-          card.getValue() === CardValue.REVERSE || 
-          card.getValue() === CardValue.DRAW_TWO ||
-          card.getValue() === CardValue.WILD_DRAW_FOUR) {
+      if (card.type === CardType.SKIP || 
+          card.type === CardType.REVERSE || 
+          card.type === CardType.DRAW_TWO ||
+          card.type === CardType.WILD_DRAW_FOUR) {
         value += 30;
       }
     }
@@ -110,15 +110,15 @@ export class MediumAI extends AIStrategy {
    */
   private evaluateActionCard(card: Card, gameState: GameStateInfo, threatLevel: number): number {
     let value = 0;
-    const cardValue = card.getValue();
+    const cardType = card.type;
 
-    switch (cardValue) {
-      case CardValue.SKIP:
+    switch (cardType) {
+      case CardType.SKIP:
         // 跳过下一个玩家，在对手威胁高时很有用
         value += threatLevel > 30 ? 25 : 15;
         break;
 
-      case CardValue.REVERSE:
+      case CardType.REVERSE:
         // 改变方向，可以打乱对手节奏
         value += 20;
         // 如果只有3个玩家，REVERSE等同于SKIP
@@ -127,7 +127,7 @@ export class MediumAI extends AIStrategy {
         }
         break;
 
-      case CardValue.DRAW_TWO:
+      case CardType.DRAW_TWO:
         // 让下一个玩家摸2张牌
         value += threatLevel > 40 ? 35 : 25;
         break;
@@ -139,17 +139,17 @@ export class MediumAI extends AIStrategy {
   /**
    * 评估万能牌价值
    */
-  private evaluateWildCard(card: Card, hand: Card[], gameState: GameStateInfo, threatLevel: number): number {
+  private evaluateWildCard(card: Card, hand: Card[], _gameState: GameStateInfo, threatLevel: number): number {
     let value = 0;
-    const cardValue = card.getValue();
+    const cardType = card.type;
 
-    switch (cardValue) {
-      case CardValue.WILD:
+    switch (cardType) {
+      case CardType.WILD:
         // 普通万能牌，可以改变颜色
         value += 40;
         break;
 
-      case CardValue.WILD_DRAW_FOUR:
+      case CardType.WILD_DRAW_FOUR:
         // 最强的攻击牌
         value += threatLevel > 30 ? 60 : 45;
         break;
@@ -169,20 +169,18 @@ export class MediumAI extends AIStrategy {
    * 获取卡牌分数
    */
   private getCardPoints(card: Card): number {
-    const value = card.getValue();
-    
-    if (typeof value === 'number') {
-      return value;
+    if (card.type === CardType.NUMBER) {
+      return this.gameRules.scoring.numberCardPoints ? (card.value ?? 0) : 0;
     }
 
-    switch (value) {
-      case CardValue.SKIP:
-      case CardValue.REVERSE:
-      case CardValue.DRAW_TWO:
-        return 20;
-      case CardValue.WILD:
-      case CardValue.WILD_DRAW_FOUR:
-        return 50;
+    switch (card.type) {
+      case CardType.SKIP:
+      case CardType.REVERSE:
+      case CardType.DRAW_TWO:
+        return this.gameRules.scoring.specialCardPoints;
+      case CardType.WILD:
+      case CardType.WILD_DRAW_FOUR:
+        return this.gameRules.scoring.wildCardPoints;
       default:
         return 0;
     }
@@ -191,7 +189,7 @@ export class MediumAI extends AIStrategy {
   /**
    * 选择颜色（万能牌）
    */
-  chooseColor(hand: Card[], gameState: GameStateInfo): CardColor {
+  chooseColor(hand: Card[], _gameState: GameStateInfo): CardColor {
     const colorCounts = this.getColorCounts(hand);
 
     // 策略1: 选择手牌中数量最多的颜色
@@ -215,7 +213,7 @@ export class MediumAI extends AIStrategy {
         // 优先选择有功能牌的颜色
         for (const color of colorsWithMaxCount) {
           const hasActionCard = hand.some(card => 
-            card.getColor() === color && card.isActionCard()
+            card.color === color && card.isActionCard()
           );
           if (hasActionCard) {
             bestColor = color;
@@ -237,8 +235,8 @@ export class MediumAI extends AIStrategy {
   /**
    * 获取各颜色卡牌数量
    */
-  private getColorCounts(hand: Card[]): Record<CardColor, number> {
-    const colorCounts: Record<CardColor, number> = {
+  private getColorCounts(hand: Card[]): Partial<Record<CardColor, number>> {
+    const colorCounts: Partial<Record<CardColor, number>> = {
       [CardColor.RED]: 0,
       [CardColor.YELLOW]: 0,
       [CardColor.GREEN]: 0,
@@ -246,10 +244,10 @@ export class MediumAI extends AIStrategy {
     };
 
     for (const card of hand) {
-      if (!card.isWild()) {
-        const color = card.getColor();
+      if (!card.isWildCard()) {
+        const color = card.color;
         if (color !== CardColor.WILD) {
-          colorCounts[color]++;
+          colorCounts[color] = (colorCounts[color] || 0) + 1;
         }
       }
     }

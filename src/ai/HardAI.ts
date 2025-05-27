@@ -1,6 +1,6 @@
 import { AIStrategy, AIDecision, GameStateInfo } from './AIStrategy';
 import { Card } from '../game/Card';
-import { CardColor, CardValue } from '../types/Card';
+import { CardColor, CardType } from '../types';
 
 /**
  * 困难AI策略
@@ -53,10 +53,37 @@ export class HardAI extends AIStrategy {
    */
   private updateCardMemory(playedCards: Card[]): void {
     for (const card of playedCards) {
-      const key = `${card.getColor()}-${card.getValue()}`;
+      const key = `${card.color}-${card.value}`;
       const currentCount = this.cardMemory.get(key) || 0;
       if (currentCount > 0) {
         this.cardMemory.set(key, currentCount - 1);
+      }
+    }
+  }
+
+  /**
+   * 更新对手行为历史
+   */
+  private updateOpponentBehavior(gameState: GameStateInfo): void {
+    for (const player of gameState.players) {
+      if (player.id !== this.playerId) {
+        const history = this.opponentBehaviorHistory.get(player.id) || [];
+        
+        // 记录对手当前状态
+        const behaviorRecord = {
+          handSize: player.handSize,
+          hasCalledUno: player.hasCalledUno,
+          timestamp: Date.now()
+        };
+        
+        history.push(behaviorRecord);
+        
+        // 只保留最近20条记录
+        if (history.length > 20) {
+          history.splice(0, history.length - 20);
+        }
+        
+        this.opponentBehaviorHistory.set(player.id, history);
       }
     }
   }
@@ -67,6 +94,9 @@ export class HardAI extends AIStrategy {
   makeDecision(hand: Card[], gameState: GameStateInfo): AIDecision {
     // 更新卡牌记忆
     this.updateCardMemory(gameState.playedCards);
+    
+    // 更新对手行为历史
+    this.updateOpponentBehavior(gameState);
 
     // 检查是否需要叫UNO
     if (this.shouldCallUno(hand, gameState)) {
@@ -115,7 +145,7 @@ export class HardAI extends AIStrategy {
     const bestMove = moveEvaluations[0];
     let chosenColor: CardColor | undefined;
 
-    if (bestMove.card.isWild()) {
+    if (bestMove.card.isWildCard()) {
       chosenColor = this.chooseOptimalColor(hand, gameState);
     }
 
@@ -144,7 +174,7 @@ export class HardAI extends AIStrategy {
     // 基础卡牌价值
     score += this.calculateAdvancedCardValue(card, hand, gameState);
 
-    // 战术价值
+    // 战术价值（包含对手行为分析）
     score += this.calculateTacticalValue(card, gameState, threatLevel);
 
     // 游戏阶段调整
@@ -183,7 +213,7 @@ export class HardAI extends AIStrategy {
    * 计算卡牌稀有度
    */
   private calculateCardRarity(card: Card): number {
-    const key = `${card.getColor()}-${card.getValue()}`;
+    const key = `${card.color}-${card.value}`;
     const remaining = this.cardMemory.get(key) || 0;
     const total = this.getTotalCardCount(card);
     
@@ -197,12 +227,12 @@ export class HardAI extends AIStrategy {
    * 获取卡牌总数
    */
   private getTotalCardCount(card: Card): number {
-    const value = card.getValue();
+    const value = card.value;
     
     if (value === 0) return 1;
     if (typeof value === 'number' && value >= 1 && value <= 9) return 2;
-    if (value === CardValue.SKIP || value === CardValue.REVERSE || value === CardValue.DRAW_TWO) return 2;
-    if (value === CardValue.WILD || value === CardValue.WILD_DRAW_FOUR) return 4;
+    if (card.type === CardType.SKIP || card.type === CardType.REVERSE || card.type === CardType.DRAW_TWO) return 2;
+    if (card.type === CardType.WILD || card.type === CardType.WILD_DRAW_FOUR) return 4;
     
     return 0;
   }
@@ -212,21 +242,21 @@ export class HardAI extends AIStrategy {
    */
   private calculateHandSynergy(card: Card, hand: Card[]): number {
     let synergy = 0;
-    const cardColor = card.getColor();
-    const cardValue = card.getValue();
-
+    const cardColor = card.color;
+    const cardValue = card.value;
+      
     // 颜色协同
-    const sameColorCards = hand.filter(c => c.getColor() === cardColor).length;
+    const sameColorCards = hand.filter(c => c.color === cardColor).length;
     synergy += sameColorCards * 3;
 
     // 数值协同
-    const sameValueCards = hand.filter(c => c.getValue() === cardValue).length;
+    const sameValueCards = hand.filter(c => c.value === cardValue).length;
     synergy += sameValueCards * 2;
 
     // 连续数字协同
     if (typeof cardValue === 'number') {
-      const hasNext = hand.some(c => c.getValue() === cardValue + 1);
-      const hasPrev = hand.some(c => c.getValue() === cardValue - 1);
+      const hasNext = hand.some(c => c.value === cardValue + 1);
+      const hasPrev = hand.some(c => c.value === cardValue - 1);
       if (hasNext || hasPrev) synergy += 5;
     }
 
@@ -238,21 +268,20 @@ export class HardAI extends AIStrategy {
    */
   private calculateTacticalValue(card: Card, gameState: GameStateInfo, threatLevel: number): number {
     let value = 0;
-    const cardValue = card.getValue();
 
     // 攻击性卡牌在高威胁时更有价值
     if (threatLevel > 50) {
-      switch (cardValue) {
-        case CardValue.SKIP:
+      switch (card.type) {
+        case CardType.SKIP:
           value += 40;
           break;
-        case CardValue.REVERSE:
+        case CardType.REVERSE:
           value += gameState.players.length === 3 ? 40 : 30;
           break;
-        case CardValue.DRAW_TWO:
+        case CardType.DRAW_TWO:
           value += 50;
           break;
-        case CardValue.WILD_DRAW_FOUR:
+        case CardType.WILD_DRAW_FOUR:
           value += 70;
           break;
       }
@@ -261,7 +290,7 @@ export class HardAI extends AIStrategy {
     // 防御性考虑
     if (threatLevel < 30) {
       // 低威胁时保留强力卡牌
-      if (cardValue === CardValue.WILD_DRAW_FOUR) {
+      if (card.type === CardType.WILD_DRAW_FOUR) {
         value -= 20;
       }
     }
@@ -274,7 +303,7 @@ export class HardAI extends AIStrategy {
    */
   private calculatePhaseAdjustment(card: Card, hand: Card[], gamePhase: 'early' | 'middle' | 'late'): number {
     let adjustment = 0;
-    const cardValue = card.getValue();
+    const cardValue = card.value;
 
     switch (gamePhase) {
       case 'early':
@@ -297,7 +326,7 @@ export class HardAI extends AIStrategy {
         adjustment += points;
         
         // 如果手牌很少，优先万能牌
-        if (hand.length <= 3 && card.isWild()) {
+        if (hand.length <= 3 && card.isWildCard()) {
           adjustment += 30;
         }
         break;
@@ -314,8 +343,8 @@ export class HardAI extends AIStrategy {
     let bonus = 0;
 
     // 如果选择的颜色对手不太可能有，给予奖励
-    if (!card.isWild()) {
-      const colorProbability = this.estimateOpponentColorProbability(card.getColor(), gameState);
+    if (!card.isWildCard()) {
+      const colorProbability = this.estimateOpponentColorProbability(card.color, gameState);
       bonus += (1 - colorProbability) * 20;
     }
 
@@ -328,7 +357,7 @@ export class HardAI extends AIStrategy {
   private estimateOpponentColorProbability(color: CardColor, gameState: GameStateInfo): number {
     // 基于已打出的卡牌和剩余卡牌计算概率
     const totalColorCards = this.getTotalColorCards(color);
-    const playedColorCards = gameState.playedCards.filter(c => c.getColor() === color).length;
+    const playedColorCards = gameState.playedCards.filter(c => c.color === color).length;
     const remainingColorCards = totalColorCards - playedColorCards;
     const totalRemainingCards = gameState.drawPileSize;
 
@@ -358,7 +387,7 @@ export class HardAI extends AIStrategy {
 
     // 检查剩余手牌中是否有可以连续打出的牌
     const newCurrentCard = card;
-    const newCurrentColor = card.isWild() ? this.chooseOptimalColor(remainingHand, gameState) : card.getColor();
+    const newCurrentColor = card.isWildCard() ? this.chooseOptimalColor(remainingHand, gameState) : card.color;
 
     const nextValidIndices = this.getValidCardIndices(remainingHand, newCurrentCard, newCurrentColor);
     
@@ -382,15 +411,13 @@ export class HardAI extends AIStrategy {
 
     // 如果对手威胁很高，优先考虑防御
     if (threatLevel > 70) {
-      const cardValue = card.getValue();
-      
       // 跳过和反转可以打断对手节奏
-      if (cardValue === CardValue.SKIP || cardValue === CardValue.REVERSE) {
+      if (card.type === CardType.SKIP || card.type === CardType.REVERSE) {
         defensiveValue += 25;
       }
       
       // 摸牌牌可以增加对手负担
-      if (cardValue === CardValue.DRAW_TWO || cardValue === CardValue.WILD_DRAW_FOUR) {
+      if (card.type === CardType.DRAW_TWO || card.type === CardType.WILD_DRAW_FOUR) {
         defensiveValue += 35;
       }
     }
@@ -415,7 +442,7 @@ export class HardAI extends AIStrategy {
    */
   chooseOptimalColor(hand: Card[], gameState: GameStateInfo): CardColor {
     const colors = [CardColor.RED, CardColor.YELLOW, CardColor.GREEN, CardColor.BLUE];
-    const colorScores: Record<CardColor, number> = {
+    const colorScores: Record<string, number> = {
       [CardColor.RED]: 0,
       [CardColor.YELLOW]: 0,
       [CardColor.GREEN]: 0,
@@ -424,11 +451,11 @@ export class HardAI extends AIStrategy {
 
     for (const color of colors) {
       // 手牌中该颜色的数量
-      const handColorCount = hand.filter(c => c.getColor() === color).length;
+      const handColorCount = hand.filter(c => c.color === color).length;
       colorScores[color] += handColorCount * 10;
 
       // 该颜色功能牌的数量
-      const actionCardCount = hand.filter(c => c.getColor() === color && c.isActionCard()).length;
+      const actionCardCount = hand.filter(c => c.color === color && c.isActionCard()).length;
       colorScores[color] += actionCardCount * 15;
 
       // 对手不太可能有该颜色的概率
@@ -465,7 +492,7 @@ export class HardAI extends AIStrategy {
     for (const [key, remaining] of this.cardMemory.entries()) {
       if (key.startsWith(color)) {
         totalRemaining += remaining;
-        totalOriginal += this.getTotalCardCount(this.parseCardFromKey(key));
+        totalOriginal += this.getCardCountFromKey(key);
       }
     }
 
@@ -474,32 +501,35 @@ export class HardAI extends AIStrategy {
   }
 
   /**
-   * 从key解析卡牌
+   * 从key直接获取卡牌数量
    */
-  private parseCardFromKey(key: string): Card {
+  private getCardCountFromKey(key: string): number {
     const [color, value] = key.split('-');
-    // 这里简化处理，实际应该根据key创建对应的Card对象
-    return new Card(color as CardColor, value as any);
+    
+    if (value === '0') return 1;
+    if (!isNaN(Number(value)) && Number(value) >= 1 && Number(value) <= 9) return 2;
+    if (['SKIP', 'REVERSE', 'DRAW_TWO'].includes(value)) return 2;
+    if (['WILD', 'WILD_DRAW_FOUR'].includes(value)) return 4;
+    
+    return 0;
   }
 
   /**
    * 获取卡牌分数
    */
   private getCardPoints(card: Card): number {
-    const value = card.getValue();
-    
-    if (typeof value === 'number') {
-      return value;
+    if (typeof card.value === 'number') {
+      return this.gameRules.scoring.numberCardPoints ? card.value : 0;
     }
 
-    switch (value) {
-      case CardValue.SKIP:
-      case CardValue.REVERSE:
-      case CardValue.DRAW_TWO:
-        return 20;
-      case CardValue.WILD:
-      case CardValue.WILD_DRAW_FOUR:
-        return 50;
+    switch (card.type) {
+      case CardType.SKIP:
+      case CardType.REVERSE:
+      case CardType.DRAW_TWO:
+        return this.gameRules.scoring.specialCardPoints;
+      case CardType.WILD:
+      case CardType.WILD_DRAW_FOUR:
+        return this.gameRules.scoring.wildCardPoints;
       default:
         return 0;
     }
@@ -510,6 +540,67 @@ export class HardAI extends AIStrategy {
    */
   chooseColor(hand: Card[], gameState: GameStateInfo): CardColor {
     return this.chooseOptimalColor(hand, gameState);
+  }
+
+  /**
+   * 分析对手威胁程度（重写基类方法）
+   */
+  protected analyzeOpponentThreat(gameState: GameStateInfo): number {
+    let threat = 0;
+    
+    for (const player of gameState.players) {
+      if (player.id === this.playerId) continue;
+      
+      // 手牌数量威胁
+      if (player.handSize <= 2) {
+        threat += 50;
+      } else if (player.handSize <= 4) {
+        threat += 20;
+      }
+      
+      // UNO状态威胁
+      if (player.hasCalledUno) {
+        threat += 30;
+      }
+      
+      // 基于行为历史的威胁分析
+      const behaviorThreat = this.analyzeBehaviorThreat(player.id, player.handSize);
+      threat += behaviorThreat;
+    }
+    
+    return threat;
+  }
+
+  /**
+   * 基于行为历史分析威胁
+   */
+  private analyzeBehaviorThreat(playerId: string, currentHandSize: number): number {
+    const history = this.opponentBehaviorHistory.get(playerId);
+    if (!history || history.length < 3) return 0;
+    
+    let threat = 0;
+    
+    // 分析手牌减少速度
+    const recentHistory = history.slice(-5);
+    const handSizeChanges = [];
+    for (let i = 1; i < recentHistory.length; i++) {
+      const change = recentHistory[i-1].handSize - recentHistory[i].handSize;
+      handSizeChanges.push(change);
+    }
+    
+    // 如果对手连续出牌，威胁增加
+    const consecutivePlays = handSizeChanges.filter(change => change > 0).length;
+    if (consecutivePlays >= 2) {
+      threat += 25;
+    }
+    
+    // 如果对手手牌减少很快，威胁增加
+    const averageReduction = handSizeChanges.reduce((sum, change) => sum + Math.max(0, change), 0) / handSizeChanges.length;
+    if (averageReduction > 0.5) {
+      threat += 15;
+    }
+    
+    return threat;
   }
 
   /**
@@ -527,28 +618,8 @@ export class HardAI extends AIStrategy {
       return false;
     }
 
-    // 高级判断：考虑打出一张牌后是否还能继续出牌
-    for (const index of validIndices) {
-      const card = hand[index];
-      const remainingHand = hand.filter((_, i) => i !== index);
-      
-      if (remainingHand.length === 1) {
-        // 如果打出这张牌后只剩一张，检查最后一张是否可能出得掉
-        const lastCard = remainingHand[0];
-        const newCurrentColor = card.isWild() ? this.chooseOptimalColor(remainingHand, gameState) : card.getColor();
-        
-        // 如果最后一张是万能牌，肯定能出
-        if (lastCard.isWild()) {
-          return true;
-        }
-        
-        // 检查最后一张是否能匹配
-        if (lastCard.getColor() === newCurrentColor || lastCard.getValue() === card.getValue()) {
-          return true;
-        }
-      }
-    }
-
-    return false;
+    // 简化逻辑：只要手牌剩2张且有可出牌就叫UNO
+    // 高级AI可以在makeDecision中进行更复杂的策略判断
+    return true;
   }
 } 

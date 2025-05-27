@@ -1,6 +1,6 @@
-import { Card } from '../game/Card';
-import { Player } from '../game/Player';
-import { CardColor } from '../types/Card';
+import {Card} from '@/game';
+import {CardColor} from '@/types';
+import {getCurrentRules} from '../config/gameRules';
 
 /**
  * AI决策结果
@@ -50,6 +50,7 @@ export interface GameStateInfo {
 export abstract class AIStrategy {
   protected difficulty: 'easy' | 'medium' | 'hard';
   protected playerId: string;
+  protected gameRules = getCurrentRules();
   
   constructor(difficulty: 'easy' | 'medium' | 'hard', playerId: string) {
     this.difficulty = difficulty;
@@ -89,10 +90,14 @@ export abstract class AIStrategy {
   /**
    * 是否应该叫UNO
    * @param hand 当前手牌
-   * @param gameState 游戏状态信息
+   * @param _gameState 游戏状态信息
    * @returns 是否叫UNO
    */
-  shouldCallUno(hand: Card[], gameState: GameStateInfo): boolean {
+  shouldCallUno(hand: Card[], _gameState: GameStateInfo): boolean {
+    // 如果游戏规则禁用了UNO检查，则不需要叫UNO
+    if (!this.gameRules.uno.enableUnoCheck) {
+      return false;
+    }
     return hand.length === 2; // 默认在还有2张牌时叫UNO
   }
   
@@ -110,19 +115,19 @@ export abstract class AIStrategy {
       const card = hand[i];
       
       // 万能牌总是可以打出
-      if (card.isWild()) {
+      if (card.isWildCard()) {
         validIndices.push(i);
         continue;
       }
       
       // 颜色匹配
-      if (card.getColor() === currentColor) {
+      if (card.color === currentColor) {
         validIndices.push(i);
         continue;
       }
       
       // 数字/动作匹配
-      if (card.getValue() === currentCard.getValue()) {
+      if (card.value === currentCard.value) {
         validIndices.push(i);
         continue;
       }
@@ -135,14 +140,14 @@ export abstract class AIStrategy {
    * 计算卡牌的战略价值
    * @param card 卡牌
    * @param hand 当前手牌
-   * @param gameState 游戏状态
+   * @param _gameState
    * @returns 价值分数（越高越好）
    */
-  protected calculateCardValue(card: Card, hand: Card[], gameState: GameStateInfo): number {
+  protected calculateCardValue(card: Card, hand: Card[], _gameState: GameStateInfo): number {
     let value = 0;
     
     // 基础分数
-    if (card.isWild()) {
+    if (card.isWildCard()) {
       value += 50; // 万能牌价值高
     } else if (card.isActionCard()) {
       value += 20; // 功能牌价值中等
@@ -151,11 +156,11 @@ export abstract class AIStrategy {
     }
     
     // 颜色匹配奖励
-    const colorCount = hand.filter(c => c.getColor() === card.getColor()).length;
+    const colorCount = hand.filter(c => c.color === card.color).length;
     value += colorCount * 5;
     
     // 数字匹配奖励
-    const numberCount = hand.filter(c => c.getValue() === card.getValue()).length;
+    const numberCount = hand.filter(c => c.value === card.value).length;
     value += numberCount * 3;
     
     return value;
