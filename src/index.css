@@ -1,0 +1,38 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-gray-200;
+  }
+  
+  body {
+    @apply bg-gradient-to-br from-blue-50 to-green-50 font-sans antialiased;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+  }
+
+  #root {
+    @apply min-h-screen;
+  }
+}
+
+@layer components {
+  .card-shadow {
+    @apply shadow-lg hover:shadow-xl transition-shadow duration-200;
+  }
+  
+  .game-card {
+    @apply relative w-16 h-24 rounded-lg border-2 border-gray-300 bg-white cursor-pointer transform transition-all duration-200 hover:scale-105;
+  }
+  
+  .game-card.selected {
+    @apply border-blue-500 shadow-lg scale-105;
+  }
+  
+  .game-card.disabled {
+    @apply opacity-50 cursor-not-allowed hover:scale-100;
+  }
+} 
