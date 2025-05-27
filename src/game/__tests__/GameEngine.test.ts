@@ -72,6 +72,10 @@ describe('GameEngine', () => {
       if (playableCard) {
         const result = gameEngine.playCard('player1', playableCard.id);
         expect(result).toBe(true);
+      } else {
+        // 如果没有可以出的牌，测试抽牌功能
+        const result = gameEngine.drawCard('player1');
+        expect(result).toBe(true);
       }
     });
 
