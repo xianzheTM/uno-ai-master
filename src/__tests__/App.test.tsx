@@ -72,17 +72,36 @@ describe('App', () => {
       expect(screen.getByText(/🎨 UI组件: Card, Button, Modal, Avatar, LoadingSpinner/)).toBeInTheDocument()
     })
 
+    it('应该显示游戏组件信息', () => {
+      render(<App />)
+      
+      expect(screen.getByText(/🎮 游戏组件: PlayerHand, DiscardPile, CurrentCard, ColorPicker/)).toBeInTheDocument()
+    })
+
+    it('应该显示完整游戏信息', () => {
+      render(<App />)
+      
+      expect(screen.getByText(/🎯 完整游戏: GameBoard, PlayerInfo, GameControls, GameSetup/)).toBeInTheDocument()
+    })
+
     it('应该显示查看演示按钮', () => {
       render(<App />)
       
       expect(screen.getByText('🎯 查看工具函数演示')).toBeInTheDocument()
       expect(screen.getByText('🎨 查看UI组件演示')).toBeInTheDocument()
+      expect(screen.getByText('🎮 查看游戏组件演示')).toBeInTheDocument()
+    })
+
+    it('应该显示开始游戏按钮', () => {
+      render(<App />)
+      
+      expect(screen.getByText('🎮 开始游戏')).toBeInTheDocument()
     })
 
     it('应该显示阶段完成信息', () => {
       render(<App />)
       
-      expect(screen.getByText(/第四阶段.*完成！基础UI组件已就绪/)).toBeInTheDocument()
+      expect(screen.getByText(/第五阶段完成！游戏界面集成完毕/)).toBeInTheDocument()
     })
   })
 
@@ -104,6 +123,16 @@ describe('App', () => {
       fireEvent.click(uiButton)
       
       expect(screen.getByTestId('ui-demo')).toBeInTheDocument()
+      expect(screen.queryByText('🎮 UNO AI')).not.toBeInTheDocument()
+    })
+
+    it('点击游戏组件演示按钮应该切换到游戏演示页面', () => {
+      render(<App />)
+      
+      const gameButton = screen.getByText('🎮 查看游戏组件演示')
+      fireEvent.click(gameButton)
+      
+      expect(screen.getByTestId('game-demo')).toBeInTheDocument()
       expect(screen.queryByText('🎮 UNO AI')).not.toBeInTheDocument()
     })
 

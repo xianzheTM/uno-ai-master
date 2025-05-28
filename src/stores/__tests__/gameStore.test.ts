@@ -45,7 +45,15 @@ describe('gameStore', () => {
   describe('initializeGame', () => {
     it('应该成功初始化游戏', () => {
       const mockGameEngine = {
-        initializeGame: vi.fn()
+        initializeGame: vi.fn(),
+        getGameState: vi.fn().mockReturnValue({
+          phase: 'playing',
+          players: [],
+          currentPlayerId: '',
+          direction: 1,
+          selectedColor: null
+        }),
+        getCurrentPlayer: vi.fn().mockReturnValue(null)
       };
       
       // Mock GameEngine constructor
@@ -53,7 +61,17 @@ describe('gameStore', () => {
       
       const { initializeGame } = useGameStore.getState();
       
-      initializeGame(4, AIDifficulty.MEDIUM);
+      const config = {
+        players: [
+          { id: '1', name: '玩家1', isAI: false },
+          { id: '2', name: 'AI玩家1', isAI: true, aiStrategy: AIDifficulty.MEDIUM },
+          { id: '3', name: 'AI玩家2', isAI: true, aiStrategy: AIDifficulty.MEDIUM },
+          { id: '4', name: 'AI玩家3', isAI: true, aiStrategy: AIDifficulty.MEDIUM }
+        ],
+        settings: { initialHandSize: 7 }
+      };
+      
+      initializeGame(config);
       
       const state = useGameStore.getState();
       
@@ -62,24 +80,25 @@ describe('gameStore', () => {
       expect(state.error).toBeNull();
       expect(mockGameEngine.initializeGame).toHaveBeenCalledWith([
         {
-          id: 'human-player',
-          name: '玩家',
-          type: PlayerType.HUMAN
+          id: '1',
+          name: '玩家1',
+          type: PlayerType.HUMAN,
+          aiDifficulty: undefined
         },
         {
-          id: 'ai-player-1',
+          id: '2',
           name: 'AI玩家1',
           type: PlayerType.AI,
           aiDifficulty: AIDifficulty.MEDIUM
         },
         {
-          id: 'ai-player-2',
+          id: '3',
           name: 'AI玩家2',
           type: PlayerType.AI,
           aiDifficulty: AIDifficulty.MEDIUM
         },
         {
-          id: 'ai-player-3',
+          id: '4',
           name: 'AI玩家3',
           type: PlayerType.AI,
           aiDifficulty: AIDifficulty.MEDIUM
@@ -95,7 +114,12 @@ describe('gameStore', () => {
       
       const { initializeGame } = useGameStore.getState();
       
-      initializeGame(4, AIDifficulty.MEDIUM);
+      const config = {
+        players: [{ id: '1', name: '玩家1', isAI: false }],
+        settings: { initialHandSize: 7 }
+      };
+      
+      initializeGame(config);
       
       const state = useGameStore.getState();
       
@@ -106,7 +130,15 @@ describe('gameStore', () => {
 
     it('应该创建正确数量的玩家', () => {
       const mockGameEngine = {
-        initializeGame: vi.fn()
+        initializeGame: vi.fn(),
+        getGameState: vi.fn().mockReturnValue({
+          phase: 'playing',
+          players: [],
+          currentPlayerId: '',
+          direction: 1,
+          selectedColor: null
+        }),
+        getCurrentPlayer: vi.fn().mockReturnValue(null)
       };
       
       vi.mocked(GameEngine).mockImplementation(() => mockGameEngine as any);
@@ -114,16 +146,25 @@ describe('gameStore', () => {
       const { initializeGame } = useGameStore.getState();
       
       // 测试2个玩家
-      initializeGame(2, AIDifficulty.EASY);
+      const config = {
+        players: [
+          { id: '1', name: '玩家', isAI: false },
+          { id: '2', name: 'AI玩家1', isAI: true, aiStrategy: AIDifficulty.EASY }
+        ],
+        settings: { initialHandSize: 7 }
+      };
+      
+      initializeGame(config);
       
       expect(mockGameEngine.initializeGame).toHaveBeenCalledWith([
         {
-          id: 'human-player',
+          id: '1',
           name: '玩家',
-          type: PlayerType.HUMAN
+          type: PlayerType.HUMAN,
+          aiDifficulty: undefined
         },
         {
-          id: 'ai-player-1',
+          id: '2',
           name: 'AI玩家1',
           type: PlayerType.AI,
           aiDifficulty: AIDifficulty.EASY
@@ -141,7 +182,8 @@ describe('gameStore', () => {
       useGameStore.setState({ gameEngine: mockGameEngine as any });
       
       const { playCard } = useGameStore.getState();
-      const result = playCard('player1', 'card1');
+      const mockCard = { id: 'card1', type: 'number', color: 'red', value: 5 };
+      const result = playCard('player1', mockCard);
       
       expect(result).toBe(true);
       expect(mockGameEngine.playCard).toHaveBeenCalledWith('player1', 'card1', undefined);
@@ -157,7 +199,8 @@ describe('gameStore', () => {
       useGameStore.setState({ gameEngine: mockGameEngine as any });
       
       const { playCard } = useGameStore.getState();
-      const result = playCard('player1', 'card1');
+      const mockCard = { id: 'card1', type: 'number', color: 'red', value: 5 };
+      const result = playCard('player1', mockCard);
       
       expect(result).toBe(false);
       expect(useGameStore.getState().error).toBe('出牌失败');
@@ -167,7 +210,8 @@ describe('gameStore', () => {
       useGameStore.setState({ gameEngine: null });
       
       const { playCard } = useGameStore.getState();
-      const result = playCard('player1', 'card1');
+      const mockCard = { id: 'card1', type: 'number', color: 'red', value: 5 };
+      const result = playCard('player1', mockCard);
       
       expect(result).toBe(false);
     });

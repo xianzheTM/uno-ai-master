@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
+import { Card as CardType } from '@/types';
 
 export interface UIState {
   // 主题设置
@@ -24,6 +25,11 @@ export interface UIState {
   showCardCount: boolean;
   showGameLog: boolean;
   gameLogMessages: string[];
+  
+  // 游戏交互状态
+  selectedCard: CardType | null;
+  showColorPicker: boolean;
+  showGameMenu: boolean;
   
   // 模态框状态
   showPauseModal: boolean;
@@ -75,6 +81,11 @@ interface UIStore extends UIState {
   addGameLogMessage: (message: string) => void;
   clearGameLog: () => void;
   
+  // 游戏交互方法
+  setSelectedCard: (card: CardType | null) => void;
+  setShowColorPicker: (show: boolean) => void;
+  setShowGameMenu: (show: boolean) => void;
+  
   // 模态框方法
   setShowPauseModal: (show: boolean) => void;
   setShowSettingsModal: (show: boolean) => void;
@@ -108,6 +119,9 @@ const initialState: UIState = {
   showCardCount: true,
   showGameLog: false,
   gameLogMessages: [],
+  selectedCard: null,
+  showColorPicker: false,
+  showGameMenu: false,
   showPauseModal: false,
   showSettingsModal: false,
   showHelpModal: false,
@@ -200,6 +214,18 @@ export const useUIStore = create<UIStore>()(
 
       clearGameLog: () => {
         set({ gameLogMessages: [] });
+      },
+
+      setSelectedCard: (card) => {
+        set({ selectedCard: card });
+      },
+
+      setShowColorPicker: (show) => {
+        set({ showColorPicker: show });
+      },
+
+      setShowGameMenu: (show) => {
+        set({ showGameMenu: show });
       },
 
       setShowPauseModal: (show) => {
