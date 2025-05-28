@@ -65,6 +65,7 @@ export const useGameStore = create<GameStore>()(
           selectedColor: null,
           winner: null,
           roundNumber: 1,
+          turnCount: 0,
           gameStartTime: Date.now(),
           currentPlayerIndex: 0,
           discardPile: [],
@@ -87,6 +88,7 @@ export const useGameStore = create<GameStore>()(
                 selectedColor: null,
                 winner: null,
                 roundNumber: 1,
+                turnCount: 0,
                 gameStartTime: Date.now(),
                 currentPlayerIndex: 0,
                 discardPile: [],
@@ -103,6 +105,7 @@ export const useGameStore = create<GameStore>()(
           set({
             gameState: {
               ...state,
+              turnCount: state.turnCount,
               currentPlayerIndex: currentPlayer ? 
                 state.players.findIndex((p: any) => p.id === state.currentPlayerId) : 0,
               discardPile: gameEngine.getDiscardPile(),

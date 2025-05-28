@@ -22,6 +22,7 @@ interface InternalGameState {
   players: any[];
   winner: any;
   roundNumber: number;
+  turnCount: number;
   gameStartTime: number;
 }
 
@@ -50,6 +51,7 @@ export class GameEngine {
       players: [],
       winner: null,
       roundNumber: 1,
+      turnCount: 0,
       gameStartTime: Date.now()
     };
     this.deck = new Deck();
@@ -235,11 +237,11 @@ export class GameEngine {
   private handleCardEffect(card: Card): void {
     switch (card.type) {
       case 'skip':
-        this.nextPlayer(); // 跳过下一个玩家
+        this.nextPlayerInternal(); // 跳过下一个玩家，但不增加turnCount
         break;
       case 'reverse':
         if (this.players.length === 2) {
-          this.nextPlayer(); // 两人游戏时反转等于跳过
+          this.nextPlayerInternal(); // 两人游戏时反转等于跳过，但不增加turnCount
         } else {
           this.reverseDirection();
         }
@@ -251,6 +253,19 @@ export class GameEngine {
         this.drawStack += 4;
         break;
     }
+  }
+
+  /**
+   * 内部方法：切换到下一个玩家但不增加turnCount
+   */
+  private nextPlayerInternal(): void {
+    if (this.direction === GameDirection.CLOCKWISE) {
+      this.currentPlayerIndex = (this.currentPlayerIndex + 1) % this.players.length;
+    } else {
+      this.currentPlayerIndex = (this.currentPlayerIndex - 1 + this.players.length) % this.players.length;
+    }
+    
+    this.gameState.currentPlayerId = this.players[this.currentPlayerIndex].id;
   }
 
   /**
@@ -317,6 +332,7 @@ export class GameEngine {
     }
     
     this.gameState.currentPlayerId = this.players[this.currentPlayerIndex].id;
+    this.gameState.turnCount++;
   }
 
   /**
@@ -518,6 +534,7 @@ export class GameEngine {
       players: [],
       winner: null,
       roundNumber: 1,
+      turnCount: 0,
       gameStartTime: Date.now()
     };
   }

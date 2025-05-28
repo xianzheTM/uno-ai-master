@@ -8,7 +8,7 @@
   }
   
   body {
-    @apply bg-gradient-to-br from-blue-50 to-green-50 font-sans antialiased;
+    @apply bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 font-sans antialiased;
     margin: 0;
     padding: 0;
     min-height: 100vh;
@@ -34,5 +34,195 @@
   
   .game-card.disabled {
     @apply opacity-50 cursor-not-allowed hover:scale-100;
+  }
+
+  /* 游戏桌面布局 - 更紧凑的设计 */
+  .game-table {
+    @apply relative w-full h-full;
+    display: grid;
+    grid-template-areas: 
+      "top-left    top-player    top-right"
+      "left-player central-area  right-player"
+      "bottom-left bottom-player bottom-right";
+    grid-template-rows: 120px 1fr 240px;
+    grid-template-columns: 200px 1fr 200px;
+    min-height: calc(100vh - 80px);
+    max-height: calc(100vh - 80px);
+    padding: 10px;
+    gap: 10px;
+    overflow: hidden;
+  }
+
+  /* 中央游戏区域 */
+  .central-game-area {
+    grid-area: central-area;
+    @apply flex items-center justify-center;
+    min-height: 300px;
+  }
+
+  /* 玩家位置 */
+  .player-position {
+    @apply flex items-center justify-center;
+    transition: all 0.3s ease;
+  }
+
+  /* 底部玩家（当前玩家） */
+  .bottom-player {
+    grid-area: bottom-player;
+    @apply flex flex-col items-center justify-start;
+  }
+
+  /* 底部玩家区域 - 水平布局 */
+  .bottom-player-area {
+    @apply bg-white bg-opacity-70 backdrop-blur-sm rounded-lg p-4 border border-indigo-200 shadow-sm;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 160px;
+    width: 100%;
+    overflow: visible;
+  }
+
+  /* 顶部玩家 */
+  .top-player {
+    grid-area: top-player;
+    @apply flex flex-col items-center justify-center;
+  }
+
+  /* 左侧玩家 */
+  .left-player {
+    grid-area: left-player;
+    @apply flex flex-col items-center justify-center;
+  }
+
+  /* 右侧玩家 */
+  .right-player {
+    grid-area: right-player;
+    @apply flex flex-col items-center justify-center;
+  }
+
+  /* 左上角玩家 */
+  .top-left-player {
+    grid-area: top-left;
+    @apply flex flex-col items-center justify-center;
+  }
+
+  /* 右上角玩家 */
+  .top-right-player {
+    grid-area: top-right;
+    @apply flex flex-col items-center justify-center;
+  }
+
+  /* 其他玩家区域 - 更紧凑 */
+  .other-player-area {
+    @apply bg-white bg-opacity-70 backdrop-blur-sm rounded-lg p-3 min-w-40 max-w-60 border border-indigo-200 shadow-sm;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* 响应式调整 */
+  @media (max-width: 768px) {
+    .game-table {
+      grid-template-areas: 
+        "top-player"
+        "central-area"
+        "bottom-player";
+      grid-template-rows: 100px 1fr 220px;
+      grid-template-columns: 1fr;
+      padding: 5px;
+      gap: 5px;
+    }
+
+    .left-player,
+    .right-player,
+    .top-left-player,
+    .top-right-player {
+      display: none;
+    }
+
+    .bottom-player-area {
+      @apply p-2;
+      min-height: 140px;
+    }
+
+    .other-player-area {
+      @apply p-2 min-w-32 max-w-48;
+    }
+
+    .central-game-area {
+      min-height: 200px;
+    }
+  }
+
+  @media (max-width: 1024px) and (min-width: 769px) {
+    .game-table {
+      grid-template-areas: 
+        "top-left top-player top-right"
+        "left-player central-area right-player"
+        "bottom-player bottom-player bottom-player";
+      grid-template-rows: 100px 1fr 220px;
+      grid-template-columns: 180px 1fr 180px;
+      gap: 8px;
+    }
+
+    .other-player-area {
+      @apply min-w-36 max-w-52;
+    }
+  }
+
+  @media (min-width: 1025px) and (max-width: 1440px) {
+    .game-table {
+      grid-template-rows: 100px 1fr 220px;
+      grid-template-columns: 180px 1fr 180px;
+      padding: 8px;
+      gap: 8px;
+    }
+
+    .other-player-area {
+      @apply min-w-40 max-w-56;
+    }
+  }
+
+  @media (min-width: 1441px) {
+    .game-table {
+      grid-template-rows: 120px 1fr 260px;
+      grid-template-columns: 220px 1fr 220px;
+      padding: 15px;
+      gap: 15px;
+    }
+
+    .other-player-area {
+      @apply min-w-44 max-w-64;
+    }
+  }
+}
+
+/* 自定义动画 */
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes spin-slow-reverse {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
+@layer utilities {
+  .animate-spin-slow {
+    animation: spin-slow 3s linear infinite;
+  }
+  
+  .animate-spin-slow-reverse {
+    animation: spin-slow-reverse 3s linear infinite;
   }
 } 

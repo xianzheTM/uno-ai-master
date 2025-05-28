@@ -33,16 +33,16 @@ export const Card: React.FC<CardProps> = ({
   className,
   disabled = false,
 }) => {
-  // 尺寸配置
+  // 尺寸配置 - 使用标准的Tailwind CSS类，确保卡牌宽高比为2:3
   const sizeClasses = {
-    small: 'w-12 h-16 text-xs',
-    medium: 'w-16 h-22 text-sm',
-    large: 'w-20 h-28 text-base',
+    small: 'w-12 h-16 text-xs',    // 48px x 64px
+    medium: 'w-16 h-24 text-sm',   // 64px x 96px  
+    large: 'w-20 h-32 text-base',  // 80px x 128px
   };
 
   // 颜色配置
   const getColorClasses = (color: CardColor) => {
-    if (isHidden) return 'bg-blue-900 border-blue-700';
+    if (isHidden) return 'bg-gradient-to-br from-indigo-400 to-purple-500 border-indigo-500 text-white shadow-md';
     
     switch (color) {
       case CardColor.RED:
@@ -65,8 +65,8 @@ export const Card: React.FC<CardProps> = ({
     if (isHidden) {
       return (
         <div className="flex flex-col items-center justify-center h-full">
-          <div className="text-2xl">🎮</div>
-          <div className="text-xs">UNO</div>
+          <div className="text-xl mb-1">🃏</div>
+          <div className="text-xs font-semibold opacity-90">UNO</div>
         </div>
       );
     }
@@ -99,14 +99,6 @@ export const Card: React.FC<CardProps> = ({
         )}>
           {getCardIcon()}
         </div>
-        {card.type === CardTypeEnum.NUMBER && (
-          <div className={clsx(
-            'text-xs opacity-75',
-            size === 'small' && 'hidden'
-          )}>
-            {card.color}
-          </div>
-        )}
       </div>
     );
   };
@@ -128,7 +120,7 @@ export const Card: React.FC<CardProps> = ({
       className={clsx(
         // 基础样式
         'rounded-lg border-2 flex items-center justify-center font-bold cursor-pointer transition-all duration-200',
-        // 尺寸
+        // 尺寸 - 确保优先级
         sizeClasses[size],
         // 颜色
         getColorClasses(card.color),
@@ -154,6 +146,13 @@ export const Card: React.FC<CardProps> = ({
           e.preventDefault();
           handleClick();
         }
+      }}
+      style={{
+        // 强制设置尺寸，确保不被其他样式覆盖
+        minWidth: size === 'small' ? '48px' : size === 'medium' ? '64px' : '80px',
+        minHeight: size === 'small' ? '64px' : size === 'medium' ? '96px' : '128px',
+        maxWidth: size === 'small' ? '48px' : size === 'medium' ? '64px' : '80px',
+        maxHeight: size === 'small' ? '64px' : size === 'medium' ? '96px' : '128px',
       }}
     >
       {getCardContent()}

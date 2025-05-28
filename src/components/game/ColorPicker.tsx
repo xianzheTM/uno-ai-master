@@ -145,7 +145,7 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
         </div>
 
         {/* 颜色选项 */}
-        <div className="grid grid-cols-2 gap-4 mb-6">
+        <div className="grid grid-cols-2 gap-4 mb-4">
           {colors.map((color) => {
             const isSelected = selectedColor === color.value;
             const isHovered = hoveredColor === color.value;
@@ -189,18 +189,6 @@ export const ColorPicker: React.FC<ColorPickerProps> = ({
                     </div>
                   </div>
                 )}
-
-                {/* 颜色名称 */}
-                <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2">
-                  <span
-                    className={clsx(
-                      'text-sm font-medium whitespace-nowrap',
-                      color.textClass
-                    )}
-                  >
-                    {color.name}
-                  </span>
-                </div>
               </button>
             );
           })}

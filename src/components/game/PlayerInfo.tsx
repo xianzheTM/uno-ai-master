@@ -23,7 +23,7 @@ export const PlayerInfo: React.FC<PlayerInfoProps> = ({
   isActive = false,
   isCurrentPlayer = false,
   showScore = false,
-  showHandCount = true,
+  showHandCount = false,
   position = 'bottom',
   size = 'medium',
   className,
@@ -49,25 +49,17 @@ export const PlayerInfo: React.FC<PlayerInfoProps> = ({
     },
   };
 
-  const positionClasses = {
-    top: 'flex-col',
-    bottom: 'flex-col',
-    left: 'flex-row items-center',
-    right: 'flex-row-reverse items-center',
-  };
-
   const currentSizeClasses = sizeClasses[size];
-  const currentPositionClasses = positionClasses[position];
 
   return (
     <div
       className={clsx(
-        'player-info flex gap-2 transition-all duration-200',
+        'player-info flex items-center gap-3 transition-all duration-200',
         currentSizeClasses.container,
-        currentPositionClasses,
         {
-          'bg-blue-500 bg-opacity-20 border-2 border-blue-400 rounded-lg': isActive,
-          'bg-green-500 bg-opacity-20 border-2 border-green-400 rounded-lg': isCurrentPlayer,
+          'bg-blue-500 bg-opacity-20 border-2 border-blue-400 rounded-lg': isActive && !isCurrentPlayer,
+          'bg-green-500 bg-opacity-20 border-2 border-green-400 rounded-lg': isCurrentPlayer && !isActive,
+          'bg-yellow-500 bg-opacity-20 border-2 border-yellow-400 rounded-lg': isCurrentPlayer && isActive,
           'bg-white bg-opacity-10 rounded-lg': !isActive && !isCurrentPlayer,
         },
         className
@@ -83,13 +75,10 @@ export const PlayerInfo: React.FC<PlayerInfoProps> = ({
       </div>
 
       {/* 玩家信息 */}
-      <div className={clsx(
-        'flex-1 text-center',
-        position === 'left' || position === 'right' ? 'text-left ml-2' : ''
-      )}>
+      <div className="flex-1 text-left min-w-0">
         {/* 玩家姓名 */}
         <div className={clsx(
-          'font-medium text-white truncate',
+          'font-medium text-gray-800 truncate',
           currentSizeClasses.name
         )}>
           {player.name}
@@ -98,39 +87,48 @@ export const PlayerInfo: React.FC<PlayerInfoProps> = ({
           )}
         </div>
 
-        {/* 状态指示 */}
-        {isCurrentPlayer && (
-          <div className={clsx(
-            'text-green-300 font-medium',
-            currentSizeClasses.text
-          )}>
-            {player.isAI ? 'AI思考中...' : '你的回合'}
-          </div>
-        )}
-
-        {isActive && !isCurrentPlayer && (
-          <div className={clsx(
-            'text-blue-300',
-            currentSizeClasses.text
-          )}>
-            等待中...
-          </div>
-        )}
-
-        {/* 手牌数量 */}
+        {/* 手牌数量 - 只在明确要求时显示 */}
         {showHandCount && (
           <div className={clsx(
-            'text-white opacity-90',
+            'text-gray-700 opacity-90',
             currentSizeClasses.text
           )}>
             {player.hand.length} 张牌
           </div>
         )}
 
+        {/* 状态指示 */}
+        {isCurrentPlayer && isActive && (
+          <div className={clsx(
+            'text-green-600 font-medium',
+            currentSizeClasses.text
+          )}>
+            {player.isAI ? 'AI思考中...' : '你的回合'}
+          </div>
+        )}
+
+        {!isCurrentPlayer && !player.isAI && (
+          <div className={clsx(
+            'text-gray-500',
+            currentSizeClasses.text
+          )}>
+            等待回合
+          </div>
+        )}
+
+        {isActive && !isCurrentPlayer && player.isAI && (
+          <div className={clsx(
+            'text-blue-600',
+            currentSizeClasses.text
+          )}>
+            AI思考中...
+          </div>
+        )}
+
         {/* 分数 */}
         {showScore && (
           <div className={clsx(
-            'text-yellow-300',
+            'text-yellow-600',
             currentSizeClasses.text
           )}>
             分数: {player.score}
@@ -140,7 +138,7 @@ export const PlayerInfo: React.FC<PlayerInfoProps> = ({
         {/* UNO状态 */}
         {player.hand.length === 1 && (
           <div className={clsx(
-            'text-red-400 font-bold animate-pulse',
+            'text-red-600 font-bold animate-pulse',
             currentSizeClasses.text
           )}>
             UNO!
@@ -150,32 +148,10 @@ export const PlayerInfo: React.FC<PlayerInfoProps> = ({
         {/* 即将获胜警告 */}
         {player.hand.length === 2 && (
           <div className={clsx(
-            'text-orange-400 font-medium',
+            'text-orange-600 font-medium',
             currentSizeClasses.text
           )}>
             ⚠️ 危险
-          </div>
-        )}
-      </div>
-
-      {/* 特殊状态指示器 */}
-      <div className="flex flex-col gap-1">
-        {/* 活跃玩家指示器 */}
-        {isActive && (
-          <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
-        )}
-
-        {/* 当前玩家指示器 */}
-        {isCurrentPlayer && (
-          <div className="w-2 h-2 bg-green-400 rounded-full" />
-        )}
-
-        {/* AI思考指示器 */}
-        {isCurrentPlayer && player.isAI && (
-          <div className="flex gap-1">
-            <div className="w-1 h-1 bg-white rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-            <div className="w-1 h-1 bg-white rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-            <div className="w-1 h-1 bg-white rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
           </div>
         )}
       </div>

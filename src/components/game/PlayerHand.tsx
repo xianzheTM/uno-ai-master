@@ -55,11 +55,14 @@ export const PlayerHand: React.FC<PlayerHandProps> = ({
   };
 
   // 计算显示的卡牌
-  const displayCards = cards.slice(0, maxDisplayCards);
-  const hiddenCount = Math.max(0, cards.length - maxDisplayCards);
+  const effectiveMaxDisplay = isCurrentPlayer ? cards.length : maxDisplayCards;
+  const displayCards = cards.slice(0, effectiveMaxDisplay);
+  const hiddenCount = Math.max(0, cards.length - effectiveMaxDisplay);
 
   // 布局样式
   const getLayoutStyles = () => {
+    const cardCount = displayCards.length;
+    
     switch (layout) {
       case 'fan':
         return {
@@ -78,8 +81,14 @@ export const PlayerHand: React.FC<PlayerHandProps> = ({
           }),
         };
       default: // horizontal
+        // 根据卡牌数量调整间距，支持更多卡牌
+        let gap = 'gap-2';
+        if (cardCount > 12) gap = 'gap-0.5';
+        else if (cardCount > 10) gap = 'gap-1';
+        else if (cardCount > 8) gap = 'gap-1.5';
+        
         return {
-          container: 'flex gap-2 overflow-x-auto',
+          container: `flex ${gap} justify-center items-center flex-wrap`,
           card: () => ({}),
         };
     }
@@ -87,17 +96,14 @@ export const PlayerHand: React.FC<PlayerHandProps> = ({
 
   const layoutStyles = getLayoutStyles();
 
-  // 卡牌尺寸映射
-  const cardSizeMap = {
-    small: 'small' as const,
-    medium: 'medium' as const,
-    large: 'medium' as const, // 手牌中的大尺寸使用medium避免过大
-  };
-
   return (
-    <div className={clsx('player-hand', className)}>
+    <div className={clsx('player-hand w-full', className)}>
       {/* 手牌容器 */}
-      <div className={clsx(layoutStyles.container, 'min-h-[80px]')}>
+      <div className={clsx(
+        layoutStyles.container, 
+        'min-h-[80px]',
+        layout === 'horizontal' && 'max-w-full'
+      )}>
         {displayCards.map((card, index) => {
           const isSelected = selectedCardIndex === index;
           const isPlayable = playableCards?.has(card.id) ?? false;
@@ -121,7 +127,7 @@ export const PlayerHand: React.FC<PlayerHandProps> = ({
             >
               <Card
                 card={card}
-                size={cardSizeMap[size]}
+                size={size}
                 isSelected={isSelected}
                 isPlayable={isCurrentPlayer ? isPlayable : undefined}
                 isHidden={!isVisible}
@@ -130,7 +136,6 @@ export const PlayerHand: React.FC<PlayerHandProps> = ({
                 className={clsx({
                   'ring-2 ring-blue-400 ring-offset-2': isSelected,
                   'ring-2 ring-green-400 ring-offset-1': isPlayable && !isSelected,
-                  'opacity-60': !isCurrentPlayer && isVisible,
                   'transform scale-110': isHovered && layout !== 'horizontal',
                 })}
               />
@@ -150,26 +155,15 @@ export const PlayerHand: React.FC<PlayerHandProps> = ({
 
       {/* 手牌信息 */}
       <div className="mt-2 text-center">
-        <span className="text-sm text-gray-600">
+        <span className="text-sm text-gray-700 font-medium">
           {cards.length} 张手牌
-          {isCurrentPlayer && playableCards && (
-            <span className="ml-2 text-green-600">
+          {isCurrentPlayer && playableCards && playableCards.size > 0 && (
+            <span className="ml-2 text-green-700 font-semibold">
               ({playableCards.size} 张可出)
             </span>
           )}
         </span>
       </div>
-
-      {/* 操作提示 */}
-      {isCurrentPlayer && (
-        <div className="mt-1 text-center">
-          <span className="text-xs text-gray-500">
-            {playableCards && playableCards.size > 0
-              ? '点击可出的牌来出牌'
-              : '没有可出的牌，点击抽牌'}
-          </span>
-        </div>
-      )}
     </div>
   );
 }; 
