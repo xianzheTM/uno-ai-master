@@ -14,6 +14,9 @@ interface GameStoreState {
   // 基本状态
   isLoading: boolean;
   error: string | null;
+  
+  // 游戏状态 - 作为普通状态属性
+  gameState: any;
 }
 
 interface GameStoreActions {
@@ -35,11 +38,14 @@ interface GameStoreActions {
   // UI状态方法
   setError: (error: string | null) => void;
   setLoading: (loading: boolean) => void;
+  
+  // 内部方法
+  updateGameState: () => void;
+  processAITurn: (playerId: string) => void;
 }
 
 interface GameStore extends GameStoreState, GameStoreActions {
-  // 计算属性 - 直接返回GameEngine的状态
-  gameState: any;
+  // 所有属性都在GameStoreState和GameStoreActions中定义
 }
 
 export const useGameStore = create<GameStore>()(
@@ -49,37 +55,119 @@ export const useGameStore = create<GameStore>()(
         gameEngine: null,
         isLoading: false,
         error: null,
+        gameState: {
+          phase: 'setup',
+          players: [],
+          currentPlayerId: '',
+          direction: 1,
+          currentCard: null,
+          drawStack: 0,
+          selectedColor: null,
+          winner: null,
+          roundNumber: 1,
+          gameStartTime: Date.now(),
+          currentPlayerIndex: 0,
+          discardPile: [],
+          deck: { length: 0 },
+          currentColor: null,
+        },
 
-        // 计算属性：gameState - 直接返回GameEngine的状态
-        get gameState() {
+        // 更新游戏状态的内部方法
+        updateGameState: () => {
           const { gameEngine } = get();
           if (!gameEngine) {
-            return {
-              phase: 'setup',
-              players: [],
-              currentPlayerId: '',
-              direction: 1,
-              currentCard: null,
-              drawStack: 0,
-              selectedColor: null,
-              winner: null,
-              roundNumber: 1,
-              gameStartTime: Date.now(),
-              currentPlayerIndex: 0,
-              discardPile: [],
-              deck: { length: 0 },
-              currentColor: null,
-            };
+            set({
+              gameState: {
+                phase: 'setup',
+                players: [],
+                currentPlayerId: '',
+                direction: 1,
+                currentCard: null,
+                drawStack: 0,
+                selectedColor: null,
+                winner: null,
+                roundNumber: 1,
+                gameStartTime: Date.now(),
+                currentPlayerIndex: 0,
+                discardPile: [],
+                deck: { length: 0 },
+                currentColor: null,
+              }
+            });
+            return;
           }
+          
           const state = gameEngine.getGameState();
-          return {
-            ...state,
-            currentPlayerIndex: gameEngine.getCurrentPlayer() ? 
-              state.players.findIndex((p: any) => p.id === state.currentPlayerId) : 0,
-            discardPile: [],
-            deck: { length: 0 },
-            currentColor: state.selectedColor,
-          };
+          const currentPlayer = gameEngine.getCurrentPlayer();
+          
+          set({
+            gameState: {
+              ...state,
+              currentPlayerIndex: currentPlayer ? 
+                state.players.findIndex((p: any) => p.id === state.currentPlayerId) : 0,
+              discardPile: gameEngine.getDiscardPile(),
+              deck: { length: gameEngine.getDrawPileCount() },
+              currentColor: state.selectedColor,
+            }
+          });
+          
+          // 如果当前玩家是AI，自动执行AI决策
+          if (currentPlayer && currentPlayer.type === PlayerType.AI && state.phase === 'playing') {
+            setTimeout(() => {
+              get().processAITurn(currentPlayer.id);
+            }, 1000 + Math.random() * 2000); // 1-3秒的思考时间
+          }
+        },
+
+        // 处理AI回合
+        processAITurn: (playerId: string) => {
+          const { gameEngine } = get();
+          if (!gameEngine) return;
+          
+          const player = gameEngine.getCurrentPlayer();
+          if (!player || player.id !== playerId || player.type !== PlayerType.AI) {
+            return;
+          }
+          
+          try {
+            // 获取可出的牌
+            const playableCards = gameEngine.getPlayableCards(playerId);
+            
+            if (playableCards.length > 0) {
+              // 随机选择一张可出的牌
+              const randomCard = playableCards[Math.floor(Math.random() * playableCards.length)];
+              
+              // 如果是万能牌，随机选择颜色
+              let chosenColor: CardColor | undefined;
+              if (randomCard.isWildCard()) {
+                const colors = [CardColor.RED, CardColor.YELLOW, CardColor.GREEN, CardColor.BLUE];
+                chosenColor = colors[Math.floor(Math.random() * colors.length)];
+              }
+              
+              // 出牌
+              const success = gameEngine.playCard(playerId, randomCard.id, chosenColor);
+              if (success) {
+                get().updateGameState();
+              } else {
+                // 出牌失败，尝试摸牌
+                gameEngine.drawCard(playerId);
+                get().updateGameState();
+              }
+            } else {
+              // 没有可出的牌，摸牌
+              gameEngine.drawCard(playerId);
+              get().updateGameState();
+            }
+          } catch (error) {
+            console.error('AI决策错误:', error);
+            // 出错时默认摸牌
+            try {
+              gameEngine.drawCard(playerId);
+              get().updateGameState();
+            } catch (drawError) {
+              console.error('AI摸牌错误:', drawError);
+            }
+          }
         },
 
         initializeGame: (config: { players: any[], settings: any }) => {
@@ -103,6 +191,9 @@ export const useGameStore = create<GameStore>()(
               gameEngine,
               isLoading: false
             });
+            
+            // 更新游戏状态
+            get().updateGameState();
           } catch (error) {
             set({
               error: error instanceof Error ? error.message : '初始化游戏失败',
@@ -116,7 +207,11 @@ export const useGameStore = create<GameStore>()(
           if (!gameEngine) return false;
           
           try {
-            return gameEngine.playCard(playerId, card.id, chosenColor);
+            const result = gameEngine.playCard(playerId, card.id, chosenColor);
+            if (result) {
+              get().updateGameState();
+            }
+            return result;
           } catch (error) {
             set({
               error: error instanceof Error ? error.message : '出牌失败'
@@ -130,7 +225,11 @@ export const useGameStore = create<GameStore>()(
           if (!gameEngine) return false;
           
           try {
-            return gameEngine.drawCard(playerId);
+            const result = gameEngine.drawCard(playerId);
+            if (result) {
+              get().updateGameState();
+            }
+            return result;
           } catch (error) {
             set({
               error: error instanceof Error ? error.message : '摸牌失败'

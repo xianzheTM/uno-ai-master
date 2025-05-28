@@ -75,6 +75,7 @@ export class GameEngine {
 
     // 创建并洗牌
     this.deck = Deck.createStandardDeck();
+    console.log('初始牌堆数量:', this.deck.getCount()); // 应该是108张
     this.deck.shuffle();
 
     // 发牌（每人7张）
@@ -86,9 +87,11 @@ export class GameEngine {
         }
       });
     }
+    console.log('发牌后牌堆数量:', this.deck.getCount()); // 应该是108 - (4*7) = 80张
 
     // 翻开第一张牌作为起始牌
     this.startFirstCard();
+    console.log('翻开第一张牌后牌堆数量:', this.deck.getCount()); // 应该是79张
 
     // 设置游戏状态
     this.gameState.phase = GamePhase.PLAYING;
@@ -98,6 +101,9 @@ export class GameEngine {
     this.gameState.direction = this.direction;
     this.gameState.drawStack = this.drawStack;
     this.gameState.selectedColor = this.selectedColor;
+    
+    // 更新游戏状态，确保currentCard被正确设置
+    this.updateGameState();
   }
 
   /**
@@ -396,6 +402,10 @@ export class GameEngine {
     this.gameState.players = this.players.map(p => p.toJSON());
     this.gameState.drawStack = this.drawStack;
     this.gameState.selectedColor = this.selectedColor;
+    
+    // 更新当前卡牌
+    const currentCard = this.getCurrentCard();
+    this.gameState.currentCard = currentCard ? currentCard.toJSON() : null;
   }
 
   /**
@@ -410,6 +420,27 @@ export class GameEngine {
    */
   getCurrentPlayer(): Player | null {
     return this.players[this.currentPlayerIndex] || null;
+  }
+
+  /**
+   * 获取抽牌堆数量
+   */
+  getDrawPileCount(): number {
+    return this.deck.getCount();
+  }
+
+  /**
+   * 获取弃牌堆
+   */
+  getDiscardPile(): Card[] {
+    return [...this.discardPile];
+  }
+
+  /**
+   * 获取当前卡牌（公共方法）
+   */
+  getCurrentCardPublic(): Card | null {
+    return this.getCurrentCard();
   }
 
   /**
