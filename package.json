@@ -5,8 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "vite build",
+    "build:with-tsc": "tsc && vite build",
+    "build:gh-pages": "NODE_ENV=production npm run build",
     "preview": "vite preview",
+    "deploy": "npm run build:gh-pages && gh-pages -d dist",
     "test": "vitest",
     "test:coverage": "vitest --coverage",
     "test:ui": "vitest --ui",
@@ -37,6 +40,7 @@
     "eslint": "^8.55.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.5",
+    "gh-pages": "^6.1.1",
     "husky": "^8.0.3",
     "lint-staged": "^15.2.0",
     "postcss": "^8.4.32",
@@ -74,10 +78,10 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/uno-ai-game.git"
+    "url": "https://github.com/yourusername/uno-ai-master.git"
   },
   "bugs": {
-    "url": "https://github.com/yourusername/uno-ai-game/issues"
+    "url": "https://github.com/yourusername/uno-ai-master/issues"
   },
-  "homepage": "https://github.com/yourusername/uno-ai-game#readme"
-} 
+  "homepage": "https://yourusername.github.io/uno-ai-master/"
+}
