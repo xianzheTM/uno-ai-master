@@ -309,7 +309,6 @@ describe('AIManager', () => {
     });
 
     it('应该处理重复创建AI', () => {
-      const ai1 = aiManager.createAI('test-player', AIDifficulty.EASY);
       const ai2 = aiManager.createAI('test-player', AIDifficulty.HARD);
       
       // 第二次创建应该覆盖第一次

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { useGameStore } from '../gameStore';
 import { GameEngine } from '../../game/GameEngine';
-import { AIDifficulty, PlayerType } from '../../types';
+import { AIDifficulty, PlayerType, CardType, CardColor } from '../../types';
 
 // Mock localStorage for persist middleware
 const mockStorage = {
@@ -53,7 +53,9 @@ describe('gameStore', () => {
           direction: 1,
           selectedColor: null
         }),
-        getCurrentPlayer: vi.fn().mockReturnValue(null)
+        getCurrentPlayer: vi.fn().mockReturnValue(null),
+        getDiscardPile: vi.fn().mockReturnValue([]),
+        getDrawPileCount: vi.fn().mockReturnValue(80)
       };
       
       // Mock GameEngine constructor
@@ -176,13 +178,23 @@ describe('gameStore', () => {
   describe('playCard', () => {
     it('应该成功出牌', () => {
       const mockGameEngine = {
-        playCard: vi.fn().mockReturnValue(true)
+        playCard: vi.fn().mockReturnValue(true),
+        getGameState: vi.fn().mockReturnValue({
+          phase: 'playing',
+          players: [],
+          currentPlayerId: '',
+          direction: 1,
+          selectedColor: null
+        }),
+        getCurrentPlayer: vi.fn().mockReturnValue(null),
+        getDiscardPile: vi.fn().mockReturnValue([]),
+        getDrawPileCount: vi.fn().mockReturnValue(80)
       };
       
       useGameStore.setState({ gameEngine: mockGameEngine as any });
       
       const { playCard } = useGameStore.getState();
-      const mockCard = { id: 'card1', type: 'number', color: 'red', value: 5 };
+      const mockCard = { id: 'card1', type: CardType.NUMBER, color: CardColor.RED, value: 5 };
       const result = playCard('player1', mockCard);
       
       expect(result).toBe(true);
@@ -199,7 +211,7 @@ describe('gameStore', () => {
       useGameStore.setState({ gameEngine: mockGameEngine as any });
       
       const { playCard } = useGameStore.getState();
-      const mockCard = { id: 'card1', type: 'number', color: 'red', value: 5 };
+      const mockCard = { id: 'card1', type: CardType.NUMBER, color: CardColor.RED, value: 5 };
       const result = playCard('player1', mockCard);
       
       expect(result).toBe(false);
@@ -210,7 +222,7 @@ describe('gameStore', () => {
       useGameStore.setState({ gameEngine: null });
       
       const { playCard } = useGameStore.getState();
-      const mockCard = { id: 'card1', type: 'number', color: 'red', value: 5 };
+      const mockCard = { id: 'card1', type: CardType.NUMBER, color: CardColor.RED, value: 5 };
       const result = playCard('player1', mockCard);
       
       expect(result).toBe(false);
@@ -220,7 +232,17 @@ describe('gameStore', () => {
   describe('drawCard', () => {
     it('应该成功抽牌', () => {
       const mockGameEngine = {
-        drawCard: vi.fn().mockReturnValue(true)
+        drawCard: vi.fn().mockReturnValue(true),
+        getGameState: vi.fn().mockReturnValue({
+          phase: 'playing',
+          players: [],
+          currentPlayerId: '',
+          direction: 1,
+          selectedColor: null
+        }),
+        getCurrentPlayer: vi.fn().mockReturnValue(null),
+        getDiscardPile: vi.fn().mockReturnValue([]),
+        getDrawPileCount: vi.fn().mockReturnValue(80)
       };
       
       useGameStore.setState({ gameEngine: mockGameEngine as any });

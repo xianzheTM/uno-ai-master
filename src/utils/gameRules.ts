@@ -187,7 +187,7 @@ export function validateInitialDeal(playerHands: Card[][], deckSize: number, han
  * 如果上一个玩家非法使用了万能+4卡，当前玩家可以质疑
  */
 export function canChallengeWildDrawFour(
-  challengerHand: Card[],
+  _challengerHand: Card[],
   previousPlayerHand: Card[],
   cardBeforeWild: Card,
   chosenColor?: CardColor

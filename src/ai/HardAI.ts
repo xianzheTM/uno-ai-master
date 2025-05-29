@@ -406,7 +406,7 @@ export class HardAI extends AIStrategy {
   /**
    * 计算防御价值
    */
-  private calculateDefensiveValue(card: Card, gameState: GameStateInfo, threatLevel: number): number {
+  private calculateDefensiveValue(card: Card, _gameState: GameStateInfo, threatLevel: number): number {
     let defensiveValue = 0;
 
     // 如果对手威胁很高，优先考虑防御
@@ -504,7 +504,7 @@ export class HardAI extends AIStrategy {
    * 从key直接获取卡牌数量
    */
   private getCardCountFromKey(key: string): number {
-    const [color, value] = key.split('-');
+    const [_color, value] = key.split('-');
     
     if (value === '0') return 1;
     if (!isNaN(Number(value)) && Number(value) >= 1 && Number(value) <= 9) return 2;
@@ -574,7 +574,7 @@ export class HardAI extends AIStrategy {
   /**
    * 基于行为历史分析威胁
    */
-  private analyzeBehaviorThreat(playerId: string, currentHandSize: number): number {
+  private analyzeBehaviorThreat(playerId: string, _currentHandSize: number): number {
     const history = this.opponentBehaviorHistory.get(playerId);
     if (!history || history.length < 3) return 0;
     

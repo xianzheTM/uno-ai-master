@@ -13,7 +13,6 @@ import {
   isGameOver,
   getWinnerIndex,
   validateInitialDeal,
-  canChallengeWildDrawFour,
   getValidColors,
   isValidColorChoice,
   calculateDrawCount,

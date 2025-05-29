@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Card, Button, Modal, Avatar, LoadingSpinner } from './ui';
-import { Card as CardType, CardColor, CardType as CardTypeEnum } from '@/types';
+import { Card as CardType } from '@/types';
 import { createStandardDeck } from '@/utils';
 
 export const UIDemo: React.FC = () => {

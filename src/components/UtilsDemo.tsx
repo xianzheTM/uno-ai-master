@@ -108,7 +108,7 @@ export const UtilsDemo: React.FC = () => {
         <div className="mb-6">
           <h3 className="text-lg font-semibold mb-2">选择卡牌测试出牌规则</h3>
           <div className="grid grid-cols-10 gap-2 max-h-40 overflow-y-auto">
-            {deck.slice(0, 20).map((card, index) => (
+            {deck.slice(0, 20).map((card, _index) => (
               <div
                 key={card.id}
                 className={`w-16 h-22 rounded border-2 flex items-center justify-center text-xs font-bold cursor-pointer transition-all ${

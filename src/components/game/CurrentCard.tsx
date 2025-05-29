@@ -19,9 +19,9 @@ interface CurrentCardProps {
  */
 export const CurrentCard: React.FC<CurrentCardProps> = ({
   card,
-  effectiveColor,
+  effectiveColor: _effectiveColor,
   isActive = false,
-  showDetails = false,
+  showDetails: _showDetails = false,
   onCardClick,
   size = 'large',
   className,

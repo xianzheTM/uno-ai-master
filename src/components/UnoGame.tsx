@@ -84,13 +84,6 @@ export const UnoGame: React.FC = () => {
     setGamePhase('setup');
   };
 
-  // 重新开始游戏
-  const handleRestartGame = () => {
-    resetGame();
-    resetUI();
-    setGamePhase('setup');
-  };
-
   // 根据游戏阶段渲染不同的界面
   switch (gamePhase) {
     case 'setup':

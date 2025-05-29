@@ -6,10 +6,9 @@ import { ColorPicker } from './ColorPicker';
 import { PlayerInfo } from './PlayerInfo';
 import { Button } from '../ui/Button';
 import { Modal } from '../ui/Modal';
-import { Avatar } from '../ui/Avatar';
 import { useGameStore } from '@/stores/gameStore';
 import { useUIStore } from '@/stores/uiStore';
-import { Card as CardType, CardColor } from '@/types';
+import { Card as CardType, CardColor, Player } from '@/types';
 import { CardAdapter } from '@/utils/cardAdapter';
 
 interface GameBoardProps {
@@ -30,7 +29,6 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     playCard,
     drawCard,
     callUno,
-    nextTurn,
     getCurrentPlayer,
     getPlayableCards,
   } = useGameStore();
@@ -117,17 +115,12 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     setShowUnoButton(false);
   };
 
-  // 处理跳过回合
-  const handleSkipTurn = () => {
-    nextTurn();
-  };
-
   // 获取玩家布局位置
   const getPlayerLayout = () => {
     const players = gameState.players;
     
     // 玩家位置保持固定，不重新排列
-    return players.map((player, index) => ({
+    return players.map((player: Player, index: number) => ({
       ...player,
       originalIndex: index,
       layoutPosition: index,
@@ -135,15 +128,15 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   };
 
   // 获取玩家位置样式
-  const getPlayerPositionClass = (player: any, totalPlayers: number) => {
+  const getPlayerPositionClass = (player: Player & { originalIndex: number; layoutPosition: number }, totalPlayers: number) => {
     // 人类玩家始终在底部
     if (!player.isAI) {
       return 'bottom-player';
     }
     
     // AI玩家按顺序分配到其他位置
-    const aiPlayers = gameState.players.filter(p => p.isAI);
-    const aiIndex = aiPlayers.findIndex(p => p.id === player.id);
+    const aiPlayers = gameState.players.filter((p: Player) => p.isAI);
+    const aiIndex = aiPlayers.findIndex((p: Player) => p.id === player.id);
     
     switch (totalPlayers) {
       case 2:
@@ -256,7 +249,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
       {/* 主游戏区域 */}
       <div className="relative z-10 flex-1 game-table">
         {/* 玩家位置 */}
-        {playerLayout.map((player, index) => {
+        {playerLayout.map((player: Player & { originalIndex: number; layoutPosition: number }) => {
           const positionClass = getPlayerPositionClass(player, playerLayout.length);
           const isCurrentTurn = player.originalIndex === gameState.currentPlayerIndex;
           const isHumanPlayer = !player.isAI;
