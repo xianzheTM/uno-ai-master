@@ -66,81 +66,74 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="text-center">
-        <h1 className="text-6xl font-bold text-gray-800 mb-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+      <div className="text-center max-w-2xl mx-auto px-6">
+        {/* 主标题 */}
+        <h1 className="text-7xl font-bold text-gray-800 mb-6">
           🎮 UNO AI
         </h1>
-        <p className="text-xl text-gray-600 mb-8">
+        <p className="text-2xl text-gray-600 mb-12">
           与AI机器人对战的经典UNO卡牌游戏
         </p>
-        <div className="space-y-4">
-          <div className="bg-white rounded-lg p-6 shadow-lg">
-            <h2 className="text-2xl font-semibold text-gray-800 mb-4">
-              项目进展更新！
-            </h2>
-            <div className="text-left space-y-2">
-              <p className="text-green-600">✅ Vite + React + TypeScript</p>
-              <p className="text-green-600">✅ Tailwind CSS</p>
-              <p className="text-green-600">✅ 项目结构搭建</p>
-              <p className="text-green-600">✅ 基础配置文件</p>
-              <p className="text-green-600">✅ 核心类型定义</p>
-              <p className="text-green-600">✅ 基础工具函数</p>
-              <p className="text-green-600">✅ 游戏核心逻辑</p>
-              <p className="text-green-600">✅ AI系统</p>
-              <p className="text-green-600">✅ 状态管理</p>
-              <p className="text-green-600">✅ 基础UI组件</p>
-              <p className="text-green-600">✅ 游戏组件</p>
-              <p className="text-green-600">✅ 游戏界面集成</p>
-              <p className="text-blue-600">📝 Card.ts - 卡牌类型</p>
-              <p className="text-blue-600">📝 Player.ts - 玩家类型</p>
-              <p className="text-blue-600">📝 GameState.ts - 游戏状态</p>
-              <p className="text-blue-600">📝 AI.ts - AI策略类型</p>
-              <p className="text-blue-600">📝 cardUtils.ts - 卡牌工具</p>
-              <p className="text-blue-600">📝 shuffleUtils.ts - 洗牌算法</p>
-              <p className="text-blue-600">📝 gameRules.ts - 游戏规则</p>
-              <p className="text-purple-600">🧪 469个单元测试全部通过</p>
-              <p className="text-orange-600">🎨 UI组件: Card, Button, Modal, Avatar, LoadingSpinner</p>
-              <p className="text-indigo-600">🎮 游戏组件: PlayerHand, DiscardPile, CurrentCard, ColorPicker</p>
-              <p className="text-red-600">🎯 完整游戏: GameBoard, PlayerInfo, GameControls, GameSetup</p>
-            </div>
+
+        {/* 游戏特色 */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+          <div className="bg-white bg-opacity-70 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-indigo-200">
+            <div className="text-4xl mb-4">🤖</div>
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">智能AI对手</h3>
+            <p className="text-gray-600 text-sm">三种难度的AI策略，提供不同挑战体验</p>
           </div>
-          <div className="space-y-4">
+          <div className="bg-white bg-opacity-70 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-indigo-200">
+            <div className="text-4xl mb-4">🎯</div>
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">经典规则</h3>
+            <p className="text-gray-600 text-sm">完整的UNO游戏规则，支持特殊卡牌效果</p>
+            </div>
+          <div className="bg-white bg-opacity-70 backdrop-blur-sm rounded-xl p-6 shadow-lg border border-indigo-200">
+            <div className="text-4xl mb-4">🎨</div>
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">精美界面</h3>
+            <p className="text-gray-600 text-sm">现代化设计，流畅的动画和交互体验</p>
+          </div>
+        </div>
+
             {/* 主要游戏入口 */}
-            <div className="bg-gradient-to-r from-green-500 to-blue-500 rounded-lg p-1">
+        <div className="space-y-6">
+          <div className="bg-gradient-to-r from-green-500 to-blue-500 rounded-2xl p-1 shadow-xl">
               <button
                 onClick={() => setCurrentView('play')}
-                className="w-full px-8 py-4 bg-white text-gray-800 rounded-lg hover:bg-gray-50 transition-colors font-bold text-xl"
+              className="w-full px-8 py-6 bg-white text-gray-800 rounded-2xl hover:bg-gray-50 transition-all duration-300 font-bold text-2xl hover:shadow-lg transform hover:scale-105"
               >
                 🎮 开始游戏
               </button>
             </div>
             
-            {/* 演示和测试入口 */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* 开发者选项 */}
+          <details className="bg-white bg-opacity-50 backdrop-blur-sm rounded-xl border border-indigo-200">
+            <summary className="px-6 py-4 cursor-pointer font-semibold text-gray-700 hover:bg-indigo-50 rounded-xl transition-colors">
+              🔧 开发者选项
+            </summary>
+            <div className="px-6 pb-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
               <button
                 onClick={() => setCurrentView('utils')}
-                className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-semibold"
+                  className="px-4 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium text-sm"
               >
-                🎯 查看工具函数演示
+                  🎯 工具函数演示
               </button>
               <button
                 onClick={() => setCurrentView('ui')}
-                className="px-6 py-3 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors font-semibold"
+                  className="px-4 py-3 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors font-medium text-sm"
               >
-                🎨 查看UI组件演示
+                  🎨 UI组件演示
               </button>
               <button
                 onClick={() => setCurrentView('game')}
-                className="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-semibold"
+                  className="px-4 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-medium text-sm"
               >
-                🎮 查看游戏组件演示
+                  🎮 游戏组件演示
               </button>
+              </div>
             </div>
-            <p className="text-gray-500">
-              第五阶段完成！游戏界面集成完毕，现在可以开始完整的UNO游戏体验！
-            </p>
-          </div>
+          </details>
         </div>
       </div>
     </div>

@@ -56,11 +56,9 @@ export class Player implements PlayerType {
 
     const card = this.hand.splice(cardIndex, 1)[0];
     
-    // 如果手牌只剩1张，自动调用UNO
-    if (this.hand.length === 1) {
-      this.callUno();
-    }
-
+    // 移除自动UNO调用，让玩家手动控制
+    // 这样更符合真实UNO游戏的体验
+    
     return card;
   }
 

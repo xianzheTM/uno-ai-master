@@ -31,6 +31,10 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     callUno,
     getCurrentPlayer,
     getPlayableCards,
+    challengeUnoViolation,
+    challengeWildDrawFour,
+    canChallengeUnoViolation,
+    canChallengeWildDrawFour,
   } = useGameStore();
 
   const {
@@ -44,6 +48,8 @@ export const GameBoard: React.FC<GameBoardProps> = ({
 
   const [selectedCardIndex, setSelectedCardIndex] = useState<number | undefined>(undefined);
   const [showUnoButton, setShowUnoButton] = useState(false);
+  const [showChallengeButtons, setShowChallengeButtons] = useState(false);
+  const [challengeResult, setChallengeResult] = useState<string | null>(null);
 
   const currentPlayer = getCurrentPlayer();
   const isCurrentPlayerHuman = currentPlayer && !currentPlayer.isAI;
@@ -51,12 +57,47 @@ export const GameBoard: React.FC<GameBoardProps> = ({
 
   // 检查是否需要显示UNO按钮
   useEffect(() => {
-    if (currentPlayer && !currentPlayer.isAI && currentPlayer.hand.length === 2) {
-      setShowUnoButton(true);
+    if (currentPlayer && !currentPlayer.isAI) {
+      const handCount = currentPlayer.hand.length;
+      // 手牌剩余2张（预防性宣告）或手牌剩余1张且未宣告（补救性宣告）时显示UNO按钮
+      if (handCount === 2 || (handCount === 1 && !currentPlayer.hasCalledUno)) {
+        setShowUnoButton(true);
+      } else {
+        setShowUnoButton(false);
+      }
     } else {
       setShowUnoButton(false);
     }
   }, [currentPlayer]);
+
+  // 检查是否需要显示质疑按钮
+  useEffect(() => {
+    if (!currentPlayer || currentPlayer.isAI) {
+      setShowChallengeButtons(false);
+      return;
+    }
+
+    // 检查是否可以质疑UNO违规或Wild Draw Four
+    const canChallengeUno = gameState.players.some((player: Player) => 
+      player.id !== currentPlayer.id && canChallengeUnoViolation(player.id)
+    );
+    const canChallengeWild = canChallengeWildDrawFour();
+    
+    setShowChallengeButtons(canChallengeUno || canChallengeWild);
+  }, [gameState, currentPlayer, canChallengeUnoViolation, canChallengeWildDrawFour]);
+
+  // 为其他玩家创建安全的手牌表示（只包含数量，不包含实际卡牌）
+  const createSecureHandForOtherPlayer = (handSize: number): CardType[] => {
+    return Array(handSize).fill(null).map((_, index) => ({
+      id: `hidden-${index}`,
+      type: 'number' as const,
+      color: 'red' as const,
+      value: '0',
+      cardValue: 0,
+      canPlayOn: () => false,
+      toJSON: () => ({ type: 'number', color: 'red', value: '0' })
+    }));
+  };
 
   // 处理卡牌点击
   const handleCardClick = (card: CardType, index: number) => {
@@ -113,6 +154,38 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     if (!currentPlayer) return;
     callUno(currentPlayer.id);
     setShowUnoButton(false);
+  };
+
+  // 处理质疑UNO违规
+  const handleChallengeUno = (suspectedPlayerId: string) => {
+    if (!currentPlayer) return;
+    
+    const result = challengeUnoViolation(currentPlayer.id, suspectedPlayerId);
+    if (result.success) {
+      setChallengeResult(`质疑成功！玩家 ${suspectedPlayerId} 罚抽 ${result.penaltyCards} 张牌`);
+    } else {
+      setChallengeResult('质疑失败！该玩家没有违规');
+    }
+    
+    // 3秒后清除结果提示
+    setTimeout(() => setChallengeResult(null), 3000);
+    setShowChallengeButtons(false);
+  };
+
+  // 处理质疑Wild Draw Four
+  const handleChallengeWildDrawFour = () => {
+    if (!currentPlayer) return;
+    
+    const result = challengeWildDrawFour(currentPlayer.id);
+    if (result.success) {
+      setChallengeResult(`质疑成功！出牌者有其他可出的牌，罚抽 ${result.penaltyCards} 张牌`);
+    } else {
+      setChallengeResult(`质疑失败！出牌者合法使用万能+4卡，你罚抽 ${result.penaltyCards} 张牌`);
+    }
+    
+    // 3秒后清除结果提示
+    setTimeout(() => setChallengeResult(null), 3000);
+    setShowChallengeButtons(false);
   };
 
   // 获取玩家布局位置
@@ -219,7 +292,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                   <div className={`text-3xl filter drop-shadow-md transition-all duration-500 ${
                     gameState.direction === 1 ? 'animate-spin-slow' : 'animate-spin-slow-reverse'
                   }`}>
-                    {gameState.direction === 1 ? '🔄' : '🔃'}
+                    {gameState.direction === 1 ? '🔃' : '🔄'}
                   </div>
                 </div>
               </div>
@@ -237,6 +310,48 @@ export const GameBoard: React.FC<GameBoardProps> = ({
               UNO!
             </Button>
           )}
+          
+          {/* 质疑按钮 */}
+          {showChallengeButtons && (
+            <div className="flex items-center gap-2">
+              {/* 质疑UNO违规 */}
+              {gameState.players.some((player: Player) => 
+                player.id !== currentPlayer?.id && canChallengeUnoViolation(player.id)
+              ) && (
+                <div className="flex items-center gap-1">
+                  <span className="text-sm text-gray-700">质疑UNO:</span>
+                  {gameState.players
+                    .filter((player: Player) => 
+                      player.id !== currentPlayer?.id && canChallengeUnoViolation(player.id)
+                    )
+                    .map((player: Player) => (
+                      <Button
+                        key={player.id}
+                        variant="secondary"
+                        size="small"
+                        onClick={() => handleChallengeUno(player.id)}
+                        className="bg-orange-500 hover:bg-orange-600 text-white"
+                      >
+                        {player.name}
+                      </Button>
+                    ))
+                  }
+                </div>
+              )}
+              
+              {/* 质疑Wild Draw Four */}
+              {canChallengeWildDrawFour() && (
+                <Button
+                  variant="secondary"
+                  onClick={handleChallengeWildDrawFour}
+                  className="bg-purple-500 hover:bg-purple-600 text-white"
+                >
+                  质疑万能+4
+                </Button>
+              )}
+            </div>
+          )}
+          
           <Button
             variant="secondary"
             onClick={() => setShowGameMenu(true)}
@@ -248,6 +363,17 @@ export const GameBoard: React.FC<GameBoardProps> = ({
 
       {/* 主游戏区域 */}
       <div className="relative z-10 flex-1 game-table">
+        {/* 质疑结果提示 */}
+        {challengeResult && (
+          <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-50">
+            <div className="bg-blue-500 text-white px-6 py-3 rounded-lg shadow-lg border-2 border-blue-600 animate-bounce">
+              <div className="text-center font-bold">
+                {challengeResult}
+              </div>
+            </div>
+          </div>
+        )}
+        
         {/* 玩家位置 */}
         {playerLayout.map((player: Player & { originalIndex: number; layoutPosition: number }) => {
           const positionClass = getPlayerPositionClass(player, playerLayout.length);
@@ -310,7 +436,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                     
                     <div className="flex-shrink-0">
                       <PlayerHand
-                        cards={player.hand}
+                        cards={createSecureHandForOtherPlayer(player.hand.length)}
                         isCurrentPlayer={false}
                         isVisible={false}
                         layout="fan"

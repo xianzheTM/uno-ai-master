@@ -39,6 +39,11 @@ export class GameEngine {
   private direction: GameDirection = GameDirection.CLOCKWISE;
   private drawStack: number = 0; // 累积的抽牌数量
   private selectedColor: CardColor | null = null; // 万能牌选择的颜色
+  private initialHandSize: number = 7; // 初始手牌数量
+  
+  // 质疑状态跟踪
+  private unoChallengedThisTurn: boolean = false; // 本回合是否已经质疑过UNO
+  private wildDrawFourChallenged: boolean = false; // 当前万能+4是否已被质疑
 
   constructor() {
     this.gameState = {
@@ -65,7 +70,7 @@ export class GameEngine {
     name: string;
     type: PlayerType;
     aiDifficulty?: AIDifficulty;
-  }>): void {
+  }>, gameSettings?: { initialHandSize?: number }): void {
     if (playerConfigs.length < 2 || playerConfigs.length > 6) {
       throw new Error('游戏需要2-6个玩家');
     }
@@ -80,8 +85,10 @@ export class GameEngine {
     console.log('初始牌堆数量:', this.deck.getCount()); // 应该是108张
     this.deck.shuffle();
 
-    // 发牌（每人7张）
-    for (let i = 0; i < 7; i++) {
+    // 发牌（使用设置中的初始手牌数量，默认7张）
+    const handSize = gameSettings?.initialHandSize || 7;
+    this.initialHandSize = handSize; // 保存初始手牌数量
+    for (let i = 0; i < handSize; i++) {
       this.players.forEach(player => {
         const card = this.deck.drawCard();
         if (card) {
@@ -89,11 +96,11 @@ export class GameEngine {
         }
       });
     }
-    console.log('发牌后牌堆数量:', this.deck.getCount()); // 应该是108 - (4*7) = 80张
+    console.log(`发牌后牌堆数量（每人${handSize}张）:`, this.deck.getCount());
 
     // 翻开第一张牌作为起始牌
     this.startFirstCard();
-    console.log('翻开第一张牌后牌堆数量:', this.deck.getCount()); // 应该是79张
+    console.log('翻开第一张牌后牌堆数量:', this.deck.getCount());
 
     // 设置游戏状态
     this.gameState.phase = GamePhase.PLAYING;
@@ -159,7 +166,7 @@ export class GameEngine {
       return false;
     }
 
-    const player = this.getPlayerById(playerId);
+    const player = this.getPlayerByIdInternal(playerId);
     if (!player || player.id !== this.gameState.currentPlayerId) {
       return false;
     }
@@ -251,6 +258,8 @@ export class GameEngine {
         break;
       case 'wild_draw_four':
         this.drawStack += 4;
+        // 重置万能+4卡的质疑状态（新卡可以被质疑）
+        this.wildDrawFourChallenged = false;
         break;
     }
   }
@@ -276,7 +285,7 @@ export class GameEngine {
       return false;
     }
 
-    const player = this.getPlayerById(playerId);
+    const player = this.getPlayerByIdInternal(playerId);
     if (!player || player.id !== this.gameState.currentPlayerId) {
       return false;
     }
@@ -333,6 +342,9 @@ export class GameEngine {
     
     this.gameState.currentPlayerId = this.players[this.currentPlayerIndex].id;
     this.gameState.turnCount++;
+    
+    // 重置本回合的质疑状态
+    this.unoChallengedThisTurn = false;
   }
 
   /**
@@ -356,14 +368,219 @@ export class GameEngine {
    * 玩家调用UNO
    */
   callUno(playerId: string): boolean {
-    const player = this.getPlayerById(playerId);
-    if (!player || player.getHandCount() !== 1) {
+    const player = this.getPlayerByIdInternal(playerId);
+    if (!player) {
       return false;
     }
 
-    player.callUno();
-    this.updateGameState();
+    // 允许在手牌剩余1张且未宣告，或手牌剩余2张时宣告UNO
+    const handCount = player.getHandCount();
+    if (handCount === 1 && !player.hasCalledUno) {
+      // 手牌剩1张且未宣告 - 补救性宣告
+      player.callUno();
+      this.updateGameState();
+      return true;
+    } else if (handCount === 2) {
+      // 手牌剩2张 - 预防性宣告（标准时机）
+      player.callUno();
+      this.updateGameState();
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * 质疑UNO违规
+   * 玩家可以质疑任何对手，但要承担质疑错误的风险
+   */
+  challengeUnoViolation(challengerId: string, suspectedPlayerId: string): { 
+    success: boolean; 
+    penaltyCards: number; 
+    punishedPlayer: string;
+  } {
+    const challenger = this.getPlayerByIdInternal(challengerId);
+    const suspected = this.getPlayerByIdInternal(suspectedPlayerId);
+    
+    if (!challenger || !suspected) {
+      return { success: false, penaltyCards: 0, punishedPlayer: '' };
+    }
+
+    // 检查本回合是否已经质疑过UNO
+    if (this.unoChallengedThisTurn) {
+      return { success: false, penaltyCards: 0, punishedPlayer: '' };
+    }
+
+    // 标记本回合已经质疑过UNO
+    this.unoChallengedThisTurn = true;
+
+    // 检查被质疑的玩家是否确实有UNO违规
+    const hasViolation = suspected.getHandCount() === 1 && !suspected.hasCalledUno;
+    
+    if (hasViolation) {
+      // 质疑成功，被质疑者罚抽2张牌
+      const penaltyCards = 2;
+      for (let i = 0; i < penaltyCards; i++) {
+        const card = this.deck.drawCard();
+        if (card) {
+          suspected.addCard(card);
+        }
+      }
+      
+      // 重置UNO状态
+      suspected.resetUnoCall();
+      this.updateGameState();
+      
+      return { 
+        success: true, 
+        penaltyCards, 
+        punishedPlayer: suspectedPlayerId 
+      };
+    } else {
+      // 质疑失败，质疑者罚抽2张牌
+      const penaltyCards = 2;
+      for (let i = 0; i < penaltyCards; i++) {
+        const card = this.deck.drawCard();
+        if (card) {
+          challenger.addCard(card);
+        }
+      }
+      
+      this.updateGameState();
+      
+      return { 
+        success: false, 
+        penaltyCards, 
+        punishedPlayer: challengerId 
+      };
+    }
+  }
+
+  /**
+   * 质疑Wild Draw Four卡的使用
+   * 当玩家认为上一个出Wild Draw Four的玩家有其他可出卡时调用
+   */
+  challengeWildDrawFour(challengerId: string): {
+    success: boolean;
+    penaltyCards: number;
+    punishedPlayer: string;
+  } {
+    const challenger = this.getPlayerByIdInternal(challengerId);
+    if (!challenger) {
+      return { success: false, penaltyCards: 0, punishedPlayer: '' };
+    }
+
+    // 检查当前万能+4是否已被质疑过
+    if (this.wildDrawFourChallenged) {
+      return { success: false, penaltyCards: 0, punishedPlayer: '' };
+    }
+
+    // 标记当前万能+4已被质疑
+    this.wildDrawFourChallenged = true;
+
+    // 获取上一个玩家（出Wild Draw Four的玩家）
+    const previousPlayerIndex = (this.currentPlayerIndex - 1 + this.players.length) % this.players.length;
+    const previousPlayer = this.players[previousPlayerIndex];
+    
+    if (!previousPlayer) {
+      return { success: false, penaltyCards: 0, punishedPlayer: '' };
+    }
+
+    // 获取出Wild Draw Four之前的卡牌
+    const cardBeforeWild = this.discardPile.length > 1 ? this.discardPile[this.discardPile.length - 2] : null;
+    
+    if (!cardBeforeWild) {
+      return { success: false, penaltyCards: 0, punishedPlayer: '' };
+    }
+
+    // 检查上一个玩家是否有其他可出的卡牌（除了Wild Draw Four）
+    const hasOtherPlayableCards = previousPlayer.hand.some(card => {
+      if (card.type === 'wild_draw_four') return false;
+      return card.canPlayOn(cardBeforeWild, this.selectedColor);
+    });
+
+    if (hasOtherPlayableCards) {
+      // 质疑成功，上一个玩家非法使用Wild Draw Four，罚抽4张牌
+      const penaltyCards = 4;
+      for (let i = 0; i < penaltyCards; i++) {
+        const card = this.deck.drawCard();
+        if (card) {
+          previousPlayer.addCard(card);
+        }
+      }
+      
+      // 质疑者不抽牌，正常继续游戏
+      this.updateGameState();
+      
+      return {
+        success: true,
+        penaltyCards,
+        punishedPlayer: previousPlayer.id
+      };
+    } else {
+      // 质疑失败，质疑者抽6张牌（原本的4张 + 惩罚2张）
+      const penaltyCards = 6;
+      for (let i = 0; i < penaltyCards; i++) {
+        const card = this.deck.drawCard();
+        if (card) {
+          challenger.addCard(card);
+        }
+      }
+      
+      this.updateGameState();
+      
+      return {
+        success: false,
+        penaltyCards,
+        punishedPlayer: challengerId
+      };
+    }
+  }
+
+  /**
+   * 检查是否可以质疑任何玩家的UNO违规
+   * 用于UI判断是否显示质疑按钮
+   */
+  canChallengeAnyUnoViolation(challengerId: string): boolean {
+    // 如果本回合已经质疑过UNO，则不能再质疑
+    if (this.unoChallengedThisTurn) {
+      return false;
+    }
+    
+    // 只要有其他玩家存在，就可以尝试质疑
+    return this.players.some(player => player.id !== challengerId);
+  }
+
+  /**
+   * 检查是否可以质疑特定玩家的UNO违规
+   * 修改为更符合真实游戏规则：玩家可以质疑任何对手
+   */
+  canChallengeUnoViolation(suspectedPlayerId: string): boolean {
+    // 如果本回合已经质疑过UNO，则不能再质疑
+    if (this.unoChallengedThisTurn) {
+      return false;
+    }
+    
+    const suspected = this.getPlayerByIdInternal(suspectedPlayerId);
+    if (!suspected) return false;
+    
+    // 任何时候都可以质疑（让玩家自己承担风险）
+    // 但被质疑者必须是有效玩家
     return true;
+  }
+
+  /**
+   * 检查是否可以质疑Wild Draw Four
+   */
+  canChallengeWildDrawFour(): boolean {
+    // 如果当前万能+4已被质疑过，则不能再质疑
+    if (this.wildDrawFourChallenged) {
+      return false;
+    }
+    
+    // 检查最后一张出的牌是否是Wild Draw Four
+    const lastCard = this.getCurrentCard();
+    return lastCard !== null && lastCard.type === 'wild_draw_four';
   }
 
   /**
@@ -405,9 +622,16 @@ export class GameEngine {
   }
 
   /**
+   * 根据ID获取玩家（公共方法，供测试使用）
+   */
+  getPlayerById(playerId: string): Player | null {
+    return this.players.find(p => p.id === playerId) || null;
+  }
+
+  /**
    * 根据ID获取玩家
    */
-  private getPlayerById(playerId: string): Player | null {
+  private getPlayerByIdInternal(playerId: string): Player | null {
     return this.players.find(p => p.id === playerId) || null;
   }
 
@@ -439,6 +663,13 @@ export class GameEngine {
   }
 
   /**
+   * 获取所有玩家
+   */
+  getPlayers(): Player[] {
+    return [...this.players];
+  }
+
+  /**
    * 获取抽牌堆数量
    */
   getDrawPileCount(): number {
@@ -467,7 +698,7 @@ export class GameEngine {
       return false;
     }
 
-    const player = this.getPlayerById(playerId);
+    const player = this.getPlayerByIdInternal(playerId);
     if (!player || player.id !== this.gameState.currentPlayerId) {
       return false;
     }
@@ -491,7 +722,7 @@ export class GameEngine {
    * 获取玩家可出的牌
    */
   getPlayableCards(playerId: string): Card[] {
-    const player = this.getPlayerById(playerId);
+    const player = this.getPlayerByIdInternal(playerId);
     const currentCard = this.getCurrentCard();
     
     if (!player || !currentCard) {
@@ -524,6 +755,10 @@ export class GameEngine {
     this.drawStack = 0;
     this.selectedColor = null;
     
+    // 重置质疑状态
+    this.unoChallengedThisTurn = false;
+    this.wildDrawFourChallenged = false;
+    
     this.gameState = {
       phase: GamePhase.SETUP,
       currentPlayerId: '',
@@ -552,7 +787,7 @@ export class GameEngine {
     this.discardPile = [];
     
     // 重新发牌
-    for (let i = 0; i < 7; i++) {
+    for (let i = 0; i < this.initialHandSize; i++) {
       this.players.forEach(player => {
         const card = this.deck.drawCard();
         if (card) {
@@ -567,6 +802,11 @@ export class GameEngine {
     // 重置游戏状态
     this.drawStack = 0;
     this.selectedColor = null;
+    
+    // 重置质疑状态
+    this.unoChallengedThisTurn = false;
+    this.wildDrawFourChallenged = false;
+    
     this.gameState.phase = GamePhase.PLAYING;
     this.gameState.roundNumber++;
     this.gameState.winner = null;

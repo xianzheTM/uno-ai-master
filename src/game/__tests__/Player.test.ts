@@ -98,13 +98,14 @@ describe('Player', () => {
       expect(player.hand).toHaveLength(2)
     })
 
-    it('playCard应该在出牌后自动调用UNO（剩余1张牌）', () => {
+    it('playCard不再自动调用UNO（现在需要手动调用）', () => {
       // 先出两张牌，剩下1张
       player.playCard(player.hand[0].id)
       player.playCard(player.hand[0].id)
       
       expect(player.hand).toHaveLength(1)
-      expect(player.hasCalledUno).toBe(true)
+      // 现在不再自动调用UNO，需要玩家手动调用
+      expect(player.hasCalledUno).toBe(false)
     })
 
     it('playCard应该在卡牌不存在时返回null', () => {

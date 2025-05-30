@@ -8,6 +8,8 @@ interface AvatarProps {
   size?: 'small' | 'medium' | 'large' | 'xl';
   isActive?: boolean;
   isCurrentPlayer?: boolean;
+  isAI?: boolean;
+  player?: { isAI: boolean; name: string }; // 支持直接传入Player对象
   showBadge?: boolean;
   badgeContent?: React.ReactNode;
   onClick?: () => void;
@@ -21,15 +23,21 @@ interface AvatarProps {
 export const Avatar: React.FC<AvatarProps> = ({
   src,
   alt,
-  name = '',
+  name: propName = '',
   size = 'medium',
   isActive = false,
   isCurrentPlayer = false,
+  isAI: propIsAI,
+  player,
   showBadge = false,
   badgeContent,
   onClick,
   className,
 }) => {
+  // 智能获取name和isAI属性
+  const name = player?.name || propName;
+  const isAI = player?.isAI ?? propIsAI ?? false;
+
   // 尺寸配置
   const sizeClasses = {
     small: 'w-8 h-8 text-xs',
@@ -56,9 +64,9 @@ export const Avatar: React.FC<AvatarProps> = ({
       .slice(0, 2);
   };
 
-  // 生成背景颜色（基于姓名）
-  const getBackgroundColor = (name: string): string => {
-    const colors = [
+  // 生成背景颜色（基于姓名和类型）
+  const getBackgroundColor = (name: string, isAI: boolean): string => {
+    const humanColors = [
       'bg-red-500',
       'bg-blue-500',
       'bg-green-500',
@@ -68,6 +76,15 @@ export const Avatar: React.FC<AvatarProps> = ({
       'bg-indigo-500',
       'bg-teal-500',
     ];
+
+    const aiColors = [
+      'bg-gray-600',
+      'bg-slate-600',
+      'bg-zinc-600',
+      'bg-stone-600',
+    ];
+    
+    const colors = isAI ? aiColors : humanColors;
     
     const hash = name.split('').reduce((acc, char) => {
       return char.charCodeAt(0) + ((acc << 5) - acc);
@@ -101,7 +118,11 @@ export const Avatar: React.FC<AvatarProps> = ({
           // 尺寸
           sizeClasses[size],
           // 背景颜色（仅文字头像）
-          !src && getBackgroundColor(name),
+          !src && getBackgroundColor(name, isAI),
+          // AI特殊样式
+          {
+            'border-2 border-dashed border-gray-400': isAI && !isCurrentPlayer,
+          },
           // 状态样式
           {
             'ring-2 ring-green-400 ring-offset-2': isActive,
@@ -115,7 +136,7 @@ export const Avatar: React.FC<AvatarProps> = ({
         onClick={onClick}
         role={onClick ? 'button' : undefined}
         tabIndex={onClick ? 0 : undefined}
-        aria-label={name ? `${name}的头像` : '用户头像'}
+        aria-label={name ? `${name}的头像${isAI ? '（AI玩家）' : ''}` : '用户头像'}
         onKeyDown={(e) => {
           if (onClick && (e.key === 'Enter' || e.key === ' ')) {
             e.preventDefault();
@@ -126,8 +147,15 @@ export const Avatar: React.FC<AvatarProps> = ({
         {avatarContent}
       </div>
 
+      {/* AI标识 */}
+      {isAI && (
+        <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-gray-500 border-2 border-white rounded-full flex items-center justify-center">
+          <span className="text-xs text-white font-bold">🤖</span>
+        </div>
+      )}
+
       {/* 在线状态指示器 */}
-      {isActive && (
+      {isActive && !isAI && (
         <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-400 border-2 border-white rounded-full" />
       )}
 
@@ -139,7 +167,7 @@ export const Avatar: React.FC<AvatarProps> = ({
       )}
 
       {/* 自定义徽章 */}
-      {showBadge && badgeContent && (
+      {showBadge && badgeContent && !isAI && (
         <div
           className={clsx(
             'absolute -top-1 -right-1 bg-red-500 text-white rounded-full flex items-center justify-center font-bold border-2 border-white',

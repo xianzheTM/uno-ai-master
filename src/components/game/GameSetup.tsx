@@ -18,6 +18,19 @@ interface PlayerSetup {
   aiStrategy?: AIDifficulty;
 }
 
+// AI名字生成器
+const generateAIName = (difficulty: AIDifficulty, index: number): string => {
+  const difficultyNames = {
+    [AIDifficulty.EASY]: '简单',
+    [AIDifficulty.MEDIUM]: '中等',
+    [AIDifficulty.HARD]: '困难'
+  };
+  
+  const difficultyName = difficultyNames[difficulty];
+  const aiNumber = index + 1;
+  return `${difficultyName}AI${aiNumber}`;
+};
+
 /**
  * 游戏设置界面组件
  * 允许用户配置游戏参数和玩家设置
@@ -29,12 +42,11 @@ export const GameSetup: React.FC<GameSetupProps> = ({
 }) => {
   const { initializeGame } = useGameStore();
 
-  const [playerCount, setPlayerCount] = useState(4);
+  // 默认设置：一个人类玩家和两个简单AI（最少3个玩家）
   const [players, setPlayers] = useState<PlayerSetup[]>([
     { id: '1', name: '玩家1', isAI: false },
-    { id: '2', name: 'AI简单', isAI: true, aiStrategy: AIDifficulty.EASY },
-    { id: '3', name: 'AI中等', isAI: true, aiStrategy: AIDifficulty.MEDIUM },
-    { id: '4', name: 'AI困难', isAI: true, aiStrategy: AIDifficulty.HARD },
+    { id: '2', name: generateAIName(AIDifficulty.EASY, 0), isAI: true, aiStrategy: AIDifficulty.EASY },
+    { id: '3', name: generateAIName(AIDifficulty.EASY, 1), isAI: true, aiStrategy: AIDifficulty.EASY },
   ]);
 
   const [gameSettings, setGameSettings] = useState({
@@ -46,28 +58,28 @@ export const GameSetup: React.FC<GameSetupProps> = ({
 
   const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
 
-  // 更新玩家数量
-  const handlePlayerCountChange = (count: number) => {
-    setPlayerCount(count);
+  // 添加玩家
+  const addPlayer = () => {
+    if (players.length >= 6) return;
     
-    const newPlayers = [...players];
+    const newId = (players.length + 1).toString();
+    const aiCount = players.filter(p => p.isAI).length;
     
-    // 如果增加玩家数量，添加新的AI玩家
-    while (newPlayers.length < count) {
-      const newId = (newPlayers.length + 1).toString();
-      newPlayers.push({
-        id: newId,
-        name: `AI玩家${newPlayers.length + 1}`,
-        isAI: true,
-        aiStrategy: AIDifficulty.MEDIUM,
-      });
-    }
+    const newPlayer: PlayerSetup = {
+      id: newId,
+      name: generateAIName(AIDifficulty.EASY, aiCount),
+      isAI: true,
+      aiStrategy: AIDifficulty.EASY,
+    };
     
-    // 如果减少玩家数量，移除多余的玩家
-    if (newPlayers.length > count) {
-      newPlayers.splice(count);
-    }
+    setPlayers([...players, newPlayer]);
+  };
+
+  // 移除玩家
+  const removePlayer = (index: number) => {
+    if (players.length <= 3) return;
     
+    const newPlayers = players.filter((_, i) => i !== index);
     setPlayers(newPlayers);
   };
 
@@ -83,10 +95,37 @@ export const GameSetup: React.FC<GameSetupProps> = ({
     const player = players[index];
     const isAI = !player.isAI;
     
+    // 如果要切换为人类玩家，先检查是否已有人类玩家
+    if (!isAI && players.some((p, i) => !p.isAI && i !== index)) {
+      alert('只能有一个人类玩家！');
+      return;
+    }
+    
+    let newName = player.name;
+    if (isAI) {
+      // 切换为AI时，生成AI名字
+      const aiCount = players.filter(p => p.isAI).length;
+      newName = generateAIName(AIDifficulty.EASY, aiCount);
+    } else {
+      // 切换为人类时，生成人类名字
+      newName = '玩家1';
+    }
+    
     handlePlayerUpdate(index, {
       isAI,
-      name: isAI ? `AI${player.name.includes('AI') ? '' : '玩家'}${index + 1}` : `玩家${index + 1}`,
-      aiStrategy: isAI ? AIDifficulty.MEDIUM : undefined,
+      name: newName,
+      aiStrategy: isAI ? AIDifficulty.EASY : undefined,
+    });
+  };
+
+  // 更新AI难度
+  const updateAIDifficulty = (index: number, difficulty: AIDifficulty) => {
+    const aiCount = players.filter((p, i) => p.isAI && i <= index).length - 1;
+    const newName = generateAIName(difficulty, aiCount);
+    
+    handlePlayerUpdate(index, {
+      aiStrategy: difficulty,
+      name: newName,
     });
   };
 
@@ -104,16 +143,19 @@ export const GameSetup: React.FC<GameSetupProps> = ({
       return;
     }
 
+    // 确保AI玩家有正确的策略设置
+    const validatedPlayers = players.map(p => ({
+      id: p.id,
+      name: p.name,
+      isAI: p.isAI,
+      aiStrategy: p.isAI ? (p.aiStrategy || AIDifficulty.EASY) : undefined,
+      hand: [],
+      score: 0,
+    }));
+
     // 初始化游戏
     initializeGame({
-      players: players.map(p => ({
-        id: p.id,
-        name: p.name,
-        isAI: p.isAI,
-        aiStrategy: p.aiStrategy,
-        hand: [],
-        score: 0,
-      })),
+      players: validatedPlayers,
       settings: gameSettings,
     });
 
@@ -127,35 +169,41 @@ export const GameSetup: React.FC<GameSetupProps> = ({
           🎮 UNO AI 游戏设置
         </h1>
 
-        {/* 玩家数量选择 */}
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold mb-4 text-gray-700">玩家数量</h2>
-          <div className="flex gap-2">
-            {[2, 3, 4, 5, 6].map(count => (
-              <Button
-                key={count}
-                onClick={() => handlePlayerCountChange(count)}
-                variant={playerCount === count ? 'primary' : 'secondary'}
-                className="flex-1"
-              >
-                {count} 人
-              </Button>
-            ))}
-          </div>
-        </div>
-
         {/* 玩家设置 */}
         <div className="mb-8">
-          <h2 className="text-xl font-semibold mb-4 text-gray-700">玩家设置</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-gray-700">玩家设置</h2>
+            <Button
+              onClick={addPlayer}
+              disabled={players.length >= 6}
+              variant="primary"
+              size="small"
+              className="px-4"
+            >
+              ➕ 添加玩家
+            </Button>
+          </div>
+          
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {players.map((player, index) => (
               <div
                 key={player.id}
-                className="border rounded-lg p-4 bg-gray-50"
+                className="border rounded-lg p-4 bg-gray-50 relative"
               >
+                {/* 移除按钮 */}
+                {players.length > 3 && (
+                  <button
+                    onClick={() => removePlayer(index)}
+                    className="absolute top-2 right-2 w-6 h-6 bg-red-500 text-white rounded-full text-xs hover:bg-red-600 transition-colors"
+                    title="移除玩家"
+                  >
+                    ×
+                  </button>
+                )}
+
                 <div className="flex items-center gap-3 mb-3">
                   <Avatar
-                    name={player.name}
+                    player={player}
                     size="small"
                   />
                   <div className="flex-1">
@@ -183,7 +231,7 @@ export const GameSetup: React.FC<GameSetupProps> = ({
                 {player.isAI && (
                   <select
                     value={player.aiStrategy}
-                    onChange={(e) => handlePlayerUpdate(index, { aiStrategy: e.target.value as AIDifficulty })}
+                    onChange={(e) => updateAIDifficulty(index, e.target.value as AIDifficulty)}
                     className="w-full px-2 py-1 border rounded text-sm"
                   >
                     <option value={AIDifficulty.EASY}>简单AI</option>
@@ -193,6 +241,13 @@ export const GameSetup: React.FC<GameSetupProps> = ({
                 )}
               </div>
             ))}
+          </div>
+
+          {/* 玩家数量提示 */}
+          <div className="mt-4 text-center text-sm text-gray-500">
+            当前 {players.length} 人游戏（3-6人）｜ 
+            {players.filter(p => !p.isAI).length} 个人类玩家，
+            {players.filter(p => p.isAI).length} 个AI玩家
           </div>
         </div>
 
@@ -254,6 +309,27 @@ export const GameSetup: React.FC<GameSetupProps> = ({
           </div>
         </div>
 
+        {/* AI策略说明 */}
+        <div className="mb-6">
+          <h3 className="text-lg font-medium mb-3 text-gray-700">AI策略说明</h3>
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+              <div>
+                <div className="font-medium text-blue-800 mb-1">🟢 简单AI</div>
+                <div className="text-blue-600">随机策略，偶尔出错，适合新手</div>
+              </div>
+              <div>
+                <div className="font-medium text-blue-800 mb-1">🟡 中等AI</div>
+                <div className="text-blue-600">基础策略，会考虑颜色和数字匹配</div>
+              </div>
+              <div>
+                <div className="font-medium text-blue-800 mb-1">🔴 困难AI</div>
+                <div className="text-blue-600">高级策略，记忆已出牌，预测对手</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* 高级设置 */}
         <div className="mb-8">
           <Button
@@ -266,10 +342,11 @@ export const GameSetup: React.FC<GameSetupProps> = ({
 
           {showAdvancedSettings && (
             <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-              <div className="text-sm text-gray-600">
-                <p>• AI思考时间会根据游戏速度自动调整</p>
+              <div className="text-sm text-gray-600 space-y-1">
+                <p>• AI思考时间会根据游戏速度和难度自动调整</p>
                 <p>• 困难AI会记住已出的牌并进行策略分析</p>
                 <p>• UNO宣告检查可以让游戏更有挑战性</p>
+                <p>• AI名字会根据难度自动生成，但可以手动修改</p>
               </div>
             </div>
           )}
@@ -296,14 +373,6 @@ export const GameSetup: React.FC<GameSetupProps> = ({
               取消
             </Button>
           )}
-        </div>
-
-        {/* 游戏预览 */}
-        <div className="mt-8 text-center text-sm text-gray-500">
-          <p>
-            将开始 {playerCount} 人游戏，包含 {players.filter(p => !p.isAI).length} 个人类玩家
-            和 {players.filter(p => p.isAI).length} 个AI玩家
-          </p>
         </div>
       </div>
     </div>

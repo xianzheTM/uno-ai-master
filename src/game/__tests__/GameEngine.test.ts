@@ -216,4 +216,146 @@ describe('GameEngine', () => {
       expect(gameState.winner).toBeNull();
     });
   });
+
+  describe('游戏设置', () => {
+    it('应该使用自定义的初始手牌数量', () => {
+      const players = [
+        { id: '1', name: 'Player 1', type: PlayerType.HUMAN },
+        { id: '2', name: 'Player 2', type: PlayerType.HUMAN }
+      ];
+      
+      // 测试5张初始手牌
+      gameEngine.initializeGame(players, { initialHandSize: 5 });
+      
+      const gamePlayers = gameEngine.getPlayers();
+      gamePlayers.forEach(player => {
+        expect(player.getHandCount()).toBe(5);
+      });
+      
+      // 重置并测试10张初始手牌
+      gameEngine.resetGame();
+      gameEngine.initializeGame(players, { initialHandSize: 10 });
+      
+      const newGamePlayers = gameEngine.getPlayers();
+      newGamePlayers.forEach(player => {
+        expect(player.getHandCount()).toBe(10);
+      });
+    });
+    
+    it('应该在新一轮中保持相同的初始手牌数量', () => {
+      const players = [
+        { id: '1', name: 'Player 1', type: PlayerType.HUMAN },
+        { id: '2', name: 'Player 2', type: PlayerType.HUMAN }
+      ];
+      
+      // 初始化游戏，使用5张手牌
+      gameEngine.initializeGame(players, { initialHandSize: 5 });
+      
+      // 开始新一轮
+      gameEngine.startNewRound();
+      
+      const gamePlayers = gameEngine.getPlayers();
+      gamePlayers.forEach(player => {
+        expect(player.getHandCount()).toBe(5);
+      });
+    });
+  });
+
+  describe('质疑功能', () => {
+    beforeEach(() => {
+      const playerConfigs = [
+        { id: 'player1', name: '玩家1', type: PlayerType.HUMAN },
+        { id: 'player2', name: '玩家2', type: PlayerType.HUMAN }
+      ];
+      gameEngine.initializeGame(playerConfigs);
+    });
+
+    it('应该在质疑失败时惩罚质疑者', () => {
+      const player1 = gameEngine.getPlayerById('player1')!;
+      const player2 = gameEngine.getPlayerById('player2')!;
+      
+      // player1有7张牌且已正确喊UNO（或根本不需要喊）
+      const initialCount1 = player1.getHandCount();
+      const initialCount2 = player2.getHandCount();
+      
+      // player2质疑player1，但player1没有违规
+      const result = gameEngine.challengeUnoViolation('player2', 'player1');
+      
+      expect(result.success).toBe(false);
+      expect(result.penaltyCards).toBe(2);
+      expect(result.punishedPlayer).toBe('player2'); // 质疑者被惩罚
+      expect(player1.getHandCount()).toBe(initialCount1); // player1手牌数不变
+      expect(player2.getHandCount()).toBe(initialCount2 + 2); // player2罚抽2张
+    });
+
+    it('应该在质疑成功时惩罚违规者', () => {
+      const player1 = gameEngine.getPlayerById('player1')!;
+      const player2 = gameEngine.getPlayerById('player2')!;
+      
+      // 模拟player1手牌只剩1张且未宣告UNO
+      player1.clearHand();
+      player1.addCard(new Card(CardType.NUMBER, CardColor.RED, 5));
+      
+      const initialCount2 = player2.getHandCount();
+      
+      // player2质疑player1的UNO违规
+      const result = gameEngine.challengeUnoViolation('player2', 'player1');
+      
+      expect(result.success).toBe(true);
+      expect(result.penaltyCards).toBe(2);
+      expect(result.punishedPlayer).toBe('player1'); // 违规者被惩罚
+      expect(player1.getHandCount()).toBe(3); // 原来1张 + 罚抽2张
+      expect(player2.getHandCount()).toBe(initialCount2); // player2手牌数不变
+    });
+
+    it('应该检查是否可以质疑UNO违规', () => {
+      // 在新的逻辑下，初始状态时任何玩家都可以被质疑
+      expect(gameEngine.canChallengeUnoViolation('player1')).toBe(true);
+      expect(gameEngine.canChallengeUnoViolation('player2')).toBe(true);
+      
+      // 检查是否可以质疑任何玩家
+      expect(gameEngine.canChallengeAnyUnoViolation('player1')).toBe(true);
+      expect(gameEngine.canChallengeAnyUnoViolation('player2')).toBe(true);
+    });
+
+    it('应该检查是否可以质疑Wild Draw Four', () => {
+      // 没有Wild Draw Four卡时不能质疑
+      expect(gameEngine.canChallengeWildDrawFour()).toBe(false);
+      
+      // 由于discardPile是private属性，我们无法直接设置
+      // 这个测试需要通过实际游戏流程来触发Wild Draw Four的情况
+      // 暂时简化为基础功能测试
+      expect(gameEngine.canChallengeWildDrawFour()).toBe(false);
+    });
+
+    it('应该允许质疑任何玩家的UNO违规', () => {
+      const player1 = gameEngine.getPlayerById('player1')!;
+      const player2 = gameEngine.getPlayerById('player2')!;
+      
+      // 无论player1有多少张牌，都应该可以被质疑（在同一回合首次质疑时）
+      expect(gameEngine.canChallengeUnoViolation('player1')).toBe(true);
+      expect(gameEngine.canChallengeUnoViolation('player2')).toBe(true);
+      
+      // 检查是否可以质疑任何玩家
+      expect(gameEngine.canChallengeAnyUnoViolation('player1')).toBe(true);
+      expect(gameEngine.canChallengeAnyUnoViolation('player2')).toBe(true);
+    });
+
+    it('应该防止同一回合重复质疑UNO', () => {
+      const player1 = gameEngine.getPlayerById('player1')!;
+      const player2 = gameEngine.getPlayerById('player2')!;
+      
+      // 第一次质疑
+      const result1 = gameEngine.challengeUnoViolation('player2', 'player1');
+      expect(result1).toBeDefined();
+      
+      // 同一回合再次质疑应该失败
+      expect(gameEngine.canChallengeUnoViolation('player1')).toBe(false);
+      expect(gameEngine.canChallengeAnyUnoViolation('player2')).toBe(false);
+      
+      const result2 = gameEngine.challengeUnoViolation('player2', 'player1');
+      expect(result2.success).toBe(false);
+      expect(result2.penaltyCards).toBe(0);
+    });
+  });
 }); 

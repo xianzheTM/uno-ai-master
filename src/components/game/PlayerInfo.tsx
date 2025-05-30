@@ -16,7 +16,8 @@ interface PlayerInfoProps {
 
 /**
  * 玩家信息组件
- * 显示玩家头像、姓名、手牌数量等信息
+ * 显示玩家头像、姓名等信息
+ * 注意：为了保持游戏公平性，不应显示其他玩家的手牌数量和UNO状态
  */
 export const PlayerInfo: React.FC<PlayerInfoProps> = ({
                                                           player,
@@ -86,8 +87,8 @@ export const PlayerInfo: React.FC<PlayerInfoProps> = ({
                     )}
                 </div>
 
-                {/* 手牌数量 - 只在明确要求时显示 */}
-                {showHandCount && (
+                {/* 手牌数量 - 只在明确要求且是当前玩家时显示 */}
+                {showHandCount && isCurrentPlayer && (
                     <div className={clsx(
                         'text-gray-700 opacity-90',
                         currentSizeClasses.text
@@ -134,8 +135,8 @@ export const PlayerInfo: React.FC<PlayerInfoProps> = ({
                     </div>
                 )}
 
-                {/* UNO状态 */}
-                {player.hand.length === 1 && (
+                {/* UNO状态 - 只显示当前玩家的状态 */}
+                {isCurrentPlayer && player.hand.length === 1 && (
                     <div className={clsx(
                         'text-red-600 font-bold animate-pulse',
                         currentSizeClasses.text
@@ -144,8 +145,8 @@ export const PlayerInfo: React.FC<PlayerInfoProps> = ({
                     </div>
                 )}
 
-                {/* 即将获胜警告 */}
-                {player.hand.length === 2 && (
+                {/* 即将获胜警告 - 只显示当前玩家的状态 */}
+                {isCurrentPlayer && player.hand.length === 2 && (
                     <div className={clsx(
                         'text-orange-600 font-medium',
                         currentSizeClasses.text

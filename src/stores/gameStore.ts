@@ -28,6 +28,20 @@ interface GameStoreActions {
   nextTurn: () => void;
   resetGame: () => void;
   
+  // 质疑功能
+  challengeUnoViolation: (challengerId: string, suspectedPlayerId: string) => {
+    success: boolean;
+    penaltyCards: number;
+    punishedPlayer: string;
+  };
+  challengeWildDrawFour: (challengerId: string) => {
+    success: boolean;
+    penaltyCards: number;
+    punishedPlayer: string;
+  };
+  canChallengeUnoViolation: (suspectedPlayerId: string) => boolean;
+  canChallengeWildDrawFour: () => boolean;
+  
   // 游戏状态查询方法
   getCurrentPlayer: () => Player | null;
   getPlayableCards: (playerId: string) => Set<string>;
@@ -45,7 +59,33 @@ interface GameStoreActions {
 }
 
 interface GameStore extends GameStoreState, GameStoreActions {
-  // 所有属性都在GameStoreState和GameStoreActions中定义
+  // 游戏引擎和状态
+  gameSettings?: any; // 保存游戏设置
+  
+  // 游戏控制方法
+  initializeGame: (config: { players: any[], settings: any }) => void;
+  playCard: (playerId: string, card: UICard, chosenColor?: CardColor) => boolean;
+  drawCard: (playerId: string) => boolean;
+  callUno: (playerId: string) => void;
+  updateGameState: () => void;
+  processAITurn: (playerId: string) => void;
+  
+  // 查询方法
+  getCurrentPlayer: () => Player | null;
+  getPlayableCards: (playerId: string) => Set<string>;
+  
+  // 游戏状态（从引擎同步）
+  players: Player[];
+  currentPlayerIndex: number;
+  direction: number;
+  currentCard: UICard | null;
+  currentColor: CardColor | null;
+  deck: UICard[];
+  discardPile: UICard[];
+  phase: string;
+  winner: Player | null;
+  drawCount: number;
+  turnCount: number;
 }
 
 export const useGameStore = create<GameStore>()(
@@ -116,9 +156,27 @@ export const useGameStore = create<GameStore>()(
           
           // 如果当前玩家是AI，自动执行AI决策
           if (currentPlayer && currentPlayer.type === PlayerType.AI && state.phase === 'playing') {
+            // 根据游戏速度设置调整AI思考时间
+            const gameSettings = get().gameSettings;
+            let baseDelay = 2000; // 默认2秒
+            
+            if (gameSettings?.gameSpeed) {
+              switch (gameSettings.gameSpeed) {
+                case 'slow':
+                  baseDelay = 3000; // 慢速：3秒
+                  break;
+                case 'normal':
+                  baseDelay = 2000; // 正常：2秒
+                  break;
+                case 'fast':
+                  baseDelay = 1000; // 快速：1秒
+                  break;
+              }
+            }
+            
             setTimeout(() => {
               get().processAITurn(currentPlayer.id);
-            }, 1000 + Math.random() * 2000); // 1-3秒的思考时间
+            }, baseDelay + Math.random() * 1000); // 加上0-1秒的随机变化
           }
         },
 
@@ -187,11 +245,14 @@ export const useGameStore = create<GameStore>()(
               aiDifficulty: p.aiStrategy as AIDifficulty
             }));
             
-            // 初始化游戏
-            gameEngine.initializeGame(playerConfigs);
+            // 初始化游戏，传递游戏设置
+            gameEngine.initializeGame(playerConfigs, {
+              initialHandSize: config.settings.initialHandSize
+            });
             
             set({
               gameEngine,
+              gameSettings: config.settings, // 保存游戏设置
               isLoading: false
             });
             
@@ -326,6 +387,66 @@ export const useGameStore = create<GameStore>()(
 
         setLoading: (loading: boolean) => {
           set({ isLoading: loading });
+        },
+
+        // 质疑功能
+        challengeUnoViolation: (challengerId: string, suspectedPlayerId: string) => {
+          const { gameEngine } = get();
+          if (!gameEngine) {
+            return { success: false, penaltyCards: 0, punishedPlayer: '' };
+          }
+          
+          try {
+            const result = gameEngine.challengeUnoViolation(challengerId, suspectedPlayerId);
+            // 无论成功还是失败都要更新游戏状态，因为可能有罚牌
+            get().updateGameState();
+            return result;
+          } catch (error) {
+            set({
+              error: error instanceof Error ? error.message : '质疑UNO失败'
+            });
+            return { success: false, penaltyCards: 0, punishedPlayer: '' };
+          }
+        },
+        
+        challengeWildDrawFour: (challengerId: string) => {
+          const { gameEngine } = get();
+          if (!gameEngine) {
+            return { success: false, penaltyCards: 0, punishedPlayer: '' };
+          }
+          
+          try {
+            const result = gameEngine.challengeWildDrawFour(challengerId);
+            get().updateGameState();
+            return result;
+          } catch (error) {
+            set({
+              error: error instanceof Error ? error.message : '质疑Wild Draw Four失败'
+            });
+            return { success: false, penaltyCards: 0, punishedPlayer: '' };
+          }
+        },
+        
+        canChallengeUnoViolation: (suspectedPlayerId: string) => {
+          const { gameEngine } = get();
+          if (!gameEngine) return false;
+          
+          try {
+            return gameEngine.canChallengeUnoViolation(suspectedPlayerId);
+          } catch (error) {
+            return false;
+          }
+        },
+        
+        canChallengeWildDrawFour: () => {
+          const { gameEngine } = get();
+          if (!gameEngine) return false;
+          
+          try {
+            return gameEngine.canChallengeWildDrawFour();
+          } catch (error) {
+            return false;
+          }
         },
       }),
       {

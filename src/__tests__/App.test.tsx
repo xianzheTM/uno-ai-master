@@ -9,7 +9,17 @@ vi.mock('../components/UtilsDemo', () => ({
 
 // Mock UIDemo component
 vi.mock('../components/UIDemo', () => ({
-  UIDemo: () => <div data-testid="ui-demo">🎨 UI组件演示</div>
+  UIDemo: () => <div data-testid="ui-demo">�� UI组件演示</div>
+}))
+
+// Mock GameDemo component
+vi.mock('../components/GameDemo', () => ({
+  GameDemo: () => <div data-testid="game-demo">🎮 游戏组件演示</div>
+}))
+
+// Mock UnoGame component
+vi.mock('../components/UnoGame', () => ({
+  UnoGame: () => <div data-testid="uno-game">UNO Game</div>
 }))
 
 describe('App', () => {
@@ -26,69 +36,15 @@ describe('App', () => {
       expect(screen.getByText('与AI机器人对战的经典UNO卡牌游戏')).toBeInTheDocument()
     })
 
-    it('应该显示项目进展更新信息', () => {
+    it('应该显示游戏特色卡片', () => {
       render(<App />)
       
-      expect(screen.getByText('项目进展更新！')).toBeInTheDocument()
-    })
-
-    it('应该显示所有完成的功能项', () => {
-      render(<App />)
-      
-      expect(screen.getByText('✅ Vite + React + TypeScript')).toBeInTheDocument()
-      expect(screen.getByText('✅ Tailwind CSS')).toBeInTheDocument()
-      expect(screen.getByText('✅ 项目结构搭建')).toBeInTheDocument()
-      expect(screen.getByText('✅ 基础配置文件')).toBeInTheDocument()
-      expect(screen.getByText('✅ 核心类型定义')).toBeInTheDocument()
-      expect(screen.getByText('✅ 基础工具函数')).toBeInTheDocument()
-      expect(screen.getByText('✅ 游戏核心逻辑')).toBeInTheDocument()
-      expect(screen.getByText('✅ AI系统')).toBeInTheDocument()
-      expect(screen.getByText('✅ 状态管理')).toBeInTheDocument()
-      expect(screen.getByText('✅ 基础UI组件')).toBeInTheDocument()
-    })
-
-    it('应该显示核心文件信息', () => {
-      render(<App />)
-      
-      expect(screen.getByText('📝 Card.ts - 卡牌类型')).toBeInTheDocument()
-      expect(screen.getByText('📝 Player.ts - 玩家类型')).toBeInTheDocument()
-      expect(screen.getByText('📝 GameState.ts - 游戏状态')).toBeInTheDocument()
-      expect(screen.getByText('📝 AI.ts - AI策略类型')).toBeInTheDocument()
-      expect(screen.getByText('📝 cardUtils.ts - 卡牌工具')).toBeInTheDocument()
-      expect(screen.getByText('📝 shuffleUtils.ts - 洗牌算法')).toBeInTheDocument()
-      expect(screen.getByText('📝 gameRules.ts - 游戏规则')).toBeInTheDocument()
-    })
-
-    it('应该显示测试信息', () => {
-      render(<App />)
-      
-      expect(screen.getByText(/🧪.*单元测试全部通过/)).toBeInTheDocument()
-    })
-
-    it('应该显示UI组件信息', () => {
-      render(<App />)
-      
-      expect(screen.getByText(/🎨 UI组件: Card, Button, Modal, Avatar, LoadingSpinner/)).toBeInTheDocument()
-    })
-
-    it('应该显示游戏组件信息', () => {
-      render(<App />)
-      
-      expect(screen.getByText(/🎮 游戏组件: PlayerHand, DiscardPile, CurrentCard, ColorPicker/)).toBeInTheDocument()
-    })
-
-    it('应该显示完整游戏信息', () => {
-      render(<App />)
-      
-      expect(screen.getByText(/🎯 完整游戏: GameBoard, PlayerInfo, GameControls, GameSetup/)).toBeInTheDocument()
-    })
-
-    it('应该显示查看演示按钮', () => {
-      render(<App />)
-      
-      expect(screen.getByText('🎯 查看工具函数演示')).toBeInTheDocument()
-      expect(screen.getByText('🎨 查看UI组件演示')).toBeInTheDocument()
-      expect(screen.getByText('🎮 查看游戏组件演示')).toBeInTheDocument()
+      expect(screen.getByText('智能AI对手')).toBeInTheDocument()
+      expect(screen.getByText('经典规则')).toBeInTheDocument()
+      expect(screen.getByText('精美界面')).toBeInTheDocument()
+      expect(screen.getByText('三种难度的AI策略，提供不同挑战体验')).toBeInTheDocument()
+      expect(screen.getByText('完整的UNO游戏规则，支持特殊卡牌效果')).toBeInTheDocument()
+      expect(screen.getByText('现代化设计，流畅的动画和交互体验')).toBeInTheDocument()
     })
 
     it('应该显示开始游戏按钮', () => {
@@ -97,18 +53,43 @@ describe('App', () => {
       expect(screen.getByText('🎮 开始游戏')).toBeInTheDocument()
     })
 
-    it('应该显示阶段完成信息', () => {
+    it('应该显示开发者选项', () => {
       render(<App />)
       
-      expect(screen.getByText(/第五阶段完成！游戏界面集成完毕/)).toBeInTheDocument()
+      expect(screen.getByText('🔧 开发者选项')).toBeInTheDocument()
+    })
+
+    it('点击开发者选项应该展开演示按钮', () => {
+      render(<App />)
+      
+      const developerOptions = screen.getByText('🔧 开发者选项')
+      fireEvent.click(developerOptions)
+      
+      expect(screen.getByText('🎯 工具函数演示')).toBeInTheDocument()
+      expect(screen.getByText('🎨 UI组件演示')).toBeInTheDocument()
+      expect(screen.getByText('🎮 游戏组件演示')).toBeInTheDocument()
     })
   })
 
   describe('页面切换功能', () => {
+    it('点击开始游戏按钮应该切换到游戏界面', () => {
+      render(<App />)
+      
+      const playButton = screen.getByText('🎮 开始游戏')
+      fireEvent.click(playButton)
+      
+      expect(screen.getByTestId('uno-game')).toBeInTheDocument()
+      expect(screen.queryByText('🎮 UNO AI')).not.toBeInTheDocument()
+    })
+
     it('点击工具函数演示按钮应该切换到演示页面', () => {
       render(<App />)
       
-      const demoButton = screen.getByText('🎯 查看工具函数演示')
+      // 先展开开发者选项
+      const developerOptions = screen.getByText('🔧 开发者选项')
+      fireEvent.click(developerOptions)
+      
+      const demoButton = screen.getByText('🎯 工具函数演示')
       fireEvent.click(demoButton)
       
       expect(screen.getByTestId('utils-demo')).toBeInTheDocument()
@@ -118,7 +99,11 @@ describe('App', () => {
     it('点击UI组件演示按钮应该切换到UI演示页面', () => {
       render(<App />)
       
-      const uiButton = screen.getByText('🎨 查看UI组件演示')
+      // 先展开开发者选项
+      const developerOptions = screen.getByText('🔧 开发者选项')
+      fireEvent.click(developerOptions)
+      
+      const uiButton = screen.getByText('🎨 UI组件演示')
       fireEvent.click(uiButton)
       
       expect(screen.getByTestId('ui-demo')).toBeInTheDocument()
@@ -128,7 +113,11 @@ describe('App', () => {
     it('点击游戏组件演示按钮应该切换到游戏演示页面', () => {
       render(<App />)
       
-      const gameButton = screen.getByText('🎮 查看游戏组件演示')
+      // 先展开开发者选项
+      const developerOptions = screen.getByText('🔧 开发者选项')
+      fireEvent.click(developerOptions)
+      
+      const gameButton = screen.getByText('🎮 游戏组件演示')
       fireEvent.click(gameButton)
       
       expect(screen.getByTestId('game-demo')).toBeInTheDocument()
@@ -138,7 +127,11 @@ describe('App', () => {
     it('演示页面应该显示返回按钮', () => {
       render(<App />)
       
-      const demoButton = screen.getByText('🎯 查看工具函数演示')
+      // 先展开开发者选项
+      const developerOptions = screen.getByText('🔧 开发者选项')
+      fireEvent.click(developerOptions)
+      
+      const demoButton = screen.getByText('🎯 工具函数演示')
       fireEvent.click(demoButton)
       
       expect(screen.getByText('← 返回主页')).toBeInTheDocument()
@@ -147,8 +140,11 @@ describe('App', () => {
     it('点击返回按钮应该回到主页', () => {
       render(<App />)
       
-      // 先切换到演示页面
-      const demoButton = screen.getByText('🎯 查看工具函数演示')
+      // 先展开开发者选项并切换到演示页面
+      const developerOptions = screen.getByText('🔧 开发者选项')
+      fireEvent.click(developerOptions)
+      
+      const demoButton = screen.getByText('🎯 工具函数演示')
       fireEvent.click(demoButton)
       
       // 点击返回按钮
@@ -172,7 +168,11 @@ describe('App', () => {
     it('演示页面应该有正确的布局类', () => {
       render(<App />)
       
-      const demoButton = screen.getByText('🎯 查看工具函数演示')
+      // 先展开开发者选项
+      const developerOptions = screen.getByText('🔧 开发者选项')
+      fireEvent.click(developerOptions)
+      
+      const demoButton = screen.getByText('🎯 工具函数演示')
       fireEvent.click(demoButton)
       
       const demoContainer = screen.getByText('← 返回主页').closest('div')
@@ -183,34 +183,38 @@ describe('App', () => {
       render(<App />)
       
       const title = screen.getByText('🎮 UNO AI')
-      expect(title).toHaveClass('text-6xl', 'font-bold', 'text-gray-800', 'mb-4')
+      expect(title).toHaveClass('text-7xl', 'font-bold', 'text-gray-800', 'mb-6')
     })
 
     it('描述应该有正确的样式类', () => {
       render(<App />)
       
       const description = screen.getByText('与AI机器人对战的经典UNO卡牌游戏')
-      expect(description).toHaveClass('text-xl', 'text-gray-600', 'mb-8')
+      expect(description).toHaveClass('text-2xl', 'text-gray-600', 'mb-12')
     })
 
-    it('演示按钮应该有正确的样式类', () => {
+    it('开始游戏按钮应该有正确的样式类', () => {
       render(<App />)
       
-      const demoButton = screen.getByText('🎯 查看工具函数演示')
-      expect(demoButton).toHaveClass('px-6', 'py-3', 'bg-blue-500', 'text-white', 'rounded-lg', 'hover:bg-blue-600', 'transition-colors', 'font-semibold')
+      const playButton = screen.getByText('🎮 开始游戏')
+      expect(playButton).toHaveClass('w-full', 'px-8', 'py-6', 'bg-white', 'text-gray-800', 'rounded-2xl', 'hover:bg-gray-50', 'transition-all', 'duration-300', 'font-bold', 'text-2xl', 'hover:shadow-lg', 'transform', 'hover:scale-105')
     })
 
-    it('UI演示按钮应该有正确的样式类', () => {
+    it('特色卡片应该有正确的样式类', () => {
       render(<App />)
       
-      const uiButton = screen.getByText('🎨 查看UI组件演示')
-      expect(uiButton).toHaveClass('px-6', 'py-3', 'bg-purple-500', 'text-white', 'rounded-lg', 'hover:bg-purple-600', 'transition-colors', 'font-semibold')
+      const featureCard = screen.getByText('智能AI对手').closest('div')
+      expect(featureCard).toHaveClass('bg-white', 'bg-opacity-70', 'backdrop-blur-sm', 'rounded-xl', 'p-6', 'shadow-lg', 'border', 'border-indigo-200')
     })
 
     it('返回按钮应该有正确的样式类', () => {
       render(<App />)
       
-      const demoButton = screen.getByText('🎯 查看工具函数演示')
+      // 先展开开发者选项
+      const developerOptions = screen.getByText('🔧 开发者选项')
+      fireEvent.click(developerOptions)
+      
+      const demoButton = screen.getByText('🎯 工具函数演示')
       fireEvent.click(demoButton)
       
       const backButton = screen.getByText('← 返回主页')
@@ -222,18 +226,68 @@ describe('App', () => {
     it('应该有响应式容器类', () => {
       render(<App />)
       
-      const demoButton = screen.getByText('🎯 查看工具函数演示')
+      // 先展开开发者选项
+      const developerOptions = screen.getByText('🔧 开发者选项')
+      fireEvent.click(developerOptions)
+      
+      const demoButton = screen.getByText('🎯 工具函数演示')
       fireEvent.click(demoButton)
       
       const container = screen.getByText('← 返回主页').closest('.container')
       expect(container).toHaveClass('container', 'mx-auto', 'px-4')
     })
 
-    it('信息卡片应该有正确的样式', () => {
+    it('特色卡片网格应该是响应式的', () => {
       render(<App />)
       
-      const infoCard = screen.getByText('项目进展更新！').closest('div')
-      expect(infoCard).toHaveClass('bg-white', 'rounded-lg', 'p-6', 'shadow-lg')
+      const grid = screen.getByText('智能AI对手').closest('div')?.parentElement
+      expect(grid).toHaveClass('grid', 'grid-cols-1', 'md:grid-cols-3', 'gap-6', 'mb-12')
+    })
+
+    it('开发者选项按钮网格应该是响应式的', () => {
+      render(<App />)
+      
+      // 先展开开发者选项
+      const developerOptions = screen.getByText('🔧 开发者选项')
+      fireEvent.click(developerOptions)
+      
+      // 查找包含所有三个按钮的网格容器
+      const utilsButton = screen.getByText('🎯 工具函数演示')
+      const uiButton = screen.getByText('🎨 UI组件演示')
+      const gameButton = screen.getByText('🎮 游戏组件演示')
+      
+      // 找到共同的父容器
+      const buttonGrid = utilsButton.parentElement
+      expect(buttonGrid).toHaveClass('grid', 'grid-cols-1', 'md:grid-cols-3', 'gap-4', 'mt-4')
+    })
+  })
+
+  describe('可访问性', () => {
+    it('按钮应该可以通过键盘访问', () => {
+      render(<App />)
+      
+      const playButton = screen.getByText('🎮 开始游戏')
+      expect(playButton.tagName).toBe('BUTTON')
+      expect(playButton).toBeVisible()
+    })
+
+    it('应该有适当的语义结构', () => {
+      render(<App />)
+      
+      expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('🎮 UNO AI')
+      expect(screen.getByRole('heading', { level: 3, name: '智能AI对手' })).toBeInTheDocument()
+      expect(screen.getByRole('heading', { level: 3, name: '经典规则' })).toBeInTheDocument()
+      expect(screen.getByRole('heading', { level: 3, name: '精美界面' })).toBeInTheDocument()
+    })
+
+    it('开发者选项应该是可折叠的', () => {
+      render(<App />)
+      
+      const details = screen.getByText('🔧 开发者选项').closest('details')
+      expect(details).toBeInTheDocument()
+      
+      const summary = screen.getByText('🔧 开发者选项')
+      expect(summary.tagName).toBe('SUMMARY')
     })
   })
 
@@ -246,7 +300,10 @@ describe('App', () => {
       expect(screen.queryByTestId('utils-demo')).not.toBeInTheDocument()
       
       // 切换到演示页面
-      const demoButton = screen.getByText('🎯 查看工具函数演示')
+      const developerOptions = screen.getByText('🔧 开发者选项')
+      fireEvent.click(developerOptions)
+      
+      const demoButton = screen.getByText('🎯 工具函数演示')
       fireEvent.click(demoButton)
       
       expect(screen.queryByText('🎮 UNO AI')).not.toBeInTheDocument()
@@ -265,7 +322,11 @@ describe('App', () => {
       
       // 多次切换
       for (let i = 0; i < 3; i++) {
-        const demoButton = screen.getByText('🎯 查看工具函数演示')
+        // 展开开发者选项
+        const developerOptions = screen.getByText('🔧 开发者选项')
+        fireEvent.click(developerOptions)
+        
+        const demoButton = screen.getByText('🎯 工具函数演示')
         fireEvent.click(demoButton)
         expect(screen.getByTestId('utils-demo')).toBeInTheDocument()
         
@@ -273,22 +334,6 @@ describe('App', () => {
         fireEvent.click(backButton)
         expect(screen.getByText('🎮 UNO AI')).toBeInTheDocument()
       }
-    })
-  })
-
-  describe('可访问性', () => {
-    it('按钮应该可以通过键盘访问', () => {
-      render(<App />)
-      
-      const demoButton = screen.getByText('🎯 查看工具函数演示')
-      expect(demoButton.tagName).toBe('BUTTON')
-      expect(demoButton).toBeVisible()
-    })
-
-    it('应该有适当的语义结构', () => {
-      render(<App />)
-      
-      expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('🎮 UNO AI')
     })
   })
 }) 

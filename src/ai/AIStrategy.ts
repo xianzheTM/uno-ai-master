@@ -196,9 +196,25 @@ export abstract class AIStrategy {
   /**
    * 添加决策延迟（模拟思考时间）
    * @param baseDelay 基础延迟时间（毫秒）
+   * @param gameSpeed 游戏速度设置
    * @returns Promise
    */
-  protected async addThinkingDelay(baseDelay: number = 1000): Promise<void> {
+  protected async addThinkingDelay(baseDelay: number = 1000, gameSpeed?: 'slow' | 'normal' | 'fast'): Promise<void> {
+    // 根据游戏速度调整基础延迟
+    if (gameSpeed) {
+      switch (gameSpeed) {
+        case 'slow':
+          baseDelay = baseDelay * 1.5;
+          break;
+        case 'normal':
+          // 保持原有延迟
+          break;
+        case 'fast':
+          baseDelay = baseDelay * 0.5;
+          break;
+      }
+    }
+    
     // 根据难度调整延迟时间
     let delay = baseDelay;
     switch (this.difficulty) {

@@ -153,17 +153,19 @@ export const PlayerHand: React.FC<PlayerHandProps> = ({
         )}
       </div>
 
-      {/* 手牌信息 */}
-      <div className="mt-2 text-center">
-        <span className="text-sm text-gray-700 font-medium">
-          {cards.length} 张手牌
-          {isCurrentPlayer && playableCards && playableCards.size > 0 && (
-            <span className="ml-2 text-green-700 font-semibold">
-              ({playableCards.size} 张可出)
-            </span>
-          )}
-        </span>
-      </div>
+      {/* 手牌信息 - 只为当前玩家显示详细信息 */}
+      {isCurrentPlayer && (
+        <div className="mt-2 text-center">
+          <span className="text-sm text-gray-700 font-medium">
+            {cards.length} 张手牌
+            {playableCards && playableCards.size > 0 && (
+              <span className="ml-2 text-green-700 font-semibold">
+                ({playableCards.size} 张可出)
+              </span>
+            )}
+          </span>
+        </div>
+      )}
     </div>
   );
 }; 

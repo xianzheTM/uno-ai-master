@@ -105,7 +105,9 @@ describe('gameStore', () => {
           type: PlayerType.AI,
           aiDifficulty: AIDifficulty.MEDIUM
         }
-      ]);
+      ], {
+        initialHandSize: 7
+      });
     });
 
     it('应该处理初始化错误', () => {
@@ -171,7 +173,9 @@ describe('gameStore', () => {
           type: PlayerType.AI,
           aiDifficulty: AIDifficulty.EASY
         }
-      ]);
+      ], {
+        initialHandSize: 7
+      });
     });
   });
 

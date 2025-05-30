@@ -65,36 +65,36 @@ export class AIManager {
    * 让AI做出决策
    * @param playerId 玩家ID
    * @param hand 手牌
-   * @param gameState 游戏状态
+   * @param gameState 游戏状态信息
    * @param skipDelay 是否跳过思考延迟（用于测试）
-   * @returns AI决策
+   * @param gameSpeed 游戏速度设置
+   * @returns AI决策结果
    */
-  async makeDecision(playerId: string, hand: Card[], gameState: GameStateInfo, skipDelay: boolean = false): Promise<AIDecision | null> {
-    const ai = this.getAI(playerId);
+  async makeDecision(playerId: string, hand: Card[], gameState: GameStateInfo, skipDelay: boolean = false, gameSpeed?: 'slow' | 'normal' | 'fast'): Promise<AIDecision | null> {
+    const ai = this.aiInstances.get(playerId);
     if (!ai) {
-      console.warn(`AI not found for player: ${playerId}`);
       return null;
     }
 
     try {
-      // 添加思考延迟（测试时可跳过）
+      // 添加思考延迟
       if (!skipDelay) {
-        await ai['addThinkingDelay']();
+        await ai['addThinkingDelay'](undefined, gameSpeed);
       }
-
-      // 做出决策
+      
       const decision = ai.makeDecision(hand, gameState);
-
+      
       // 记录决策历史
       this.recordDecision(playerId, decision);
-
+      
       return decision;
     } catch (error) {
-      console.error(`AI decision error for player ${playerId}:`, error);
+      console.error(`AI决策出错 (${playerId}):`, error);
+      // 返回安全的默认决策
       return {
         type: 'draw',
         confidence: 0,
-        reasoning: 'AI决策出错，默认摸牌',
+        reasoning: 'AI决策出错，默认摸牌'
       };
     }
   }
