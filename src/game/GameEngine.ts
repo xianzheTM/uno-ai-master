@@ -177,7 +177,7 @@ export class GameEngine {
     }
 
     // 检查是否可以出牌
-    if (!player.canPlayCard(cardId, currentCard)) {
+    if (!player.canPlayCard(cardId, currentCard, this.selectedColor)) {
       return false;
     }
 
@@ -715,7 +715,7 @@ export class GameEngine {
       );
     }
 
-    return player.hasPlayableCard(currentCard);
+    return player.hasPlayableCard(currentCard, this.selectedColor);
   }
 
   /**
@@ -736,7 +736,7 @@ export class GameEngine {
       );
     }
 
-    return player.getPlayableCards(currentCard);
+    return player.getPlayableCards(currentCard, this.selectedColor);
   }
 
   /**

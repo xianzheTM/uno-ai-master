@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { devtools } from 'zustand/middleware';
+import { devtools, persist } from 'zustand/middleware';
 import { Card as CardType } from '@/types';
 
 export interface UIState {
@@ -133,172 +133,185 @@ const initialState: UIState = {
 
 export const useUIStore = create<UIStore>()(
   devtools(
-    (set, get) => ({
-      ...initialState,
+    persist(
+      (set, get) => ({
+        ...initialState,
 
-      setTheme: (theme) => {
-        set({ theme });
-        // 应用主题到document
-        document.documentElement.setAttribute('data-theme', theme);
-      },
+        setTheme: (theme) => {
+          set({ theme });
+          // 应用主题到document
+          document.documentElement.setAttribute('data-theme', theme);
+        },
 
-      toggleTheme: () => {
-        const currentTheme = get().theme;
-        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-        get().setTheme(newTheme);
-      },
+        toggleTheme: () => {
+          const currentTheme = get().theme;
+          const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+          get().setTheme(newTheme);
+        },
 
-      setSoundEnabled: (enabled) => {
-        set({ soundEnabled: enabled });
-      },
+        setSoundEnabled: (enabled) => {
+          set({ soundEnabled: enabled });
+        },
 
-      setMusicEnabled: (enabled) => {
-        set({ musicEnabled: enabled });
-      },
+        setMusicEnabled: (enabled) => {
+          set({ musicEnabled: enabled });
+        },
 
-      setVolume: (volume) => {
-        set({ volume: Math.max(0, Math.min(1, volume)) });
-      },
+        setVolume: (volume) => {
+          set({ volume: Math.max(0, Math.min(1, volume)) });
+        },
 
-      setAnimationsEnabled: (enabled) => {
-        set({ animationsEnabled: enabled });
-      },
+        setAnimationsEnabled: (enabled) => {
+          set({ animationsEnabled: enabled });
+        },
 
-      setAnimationSpeed: (speed) => {
-        set({ animationSpeed: speed });
-      },
+        setAnimationSpeed: (speed) => {
+          set({ animationSpeed: speed });
+        },
 
-      setCurrentScreen: (screen) => {
-        set({ currentScreen: screen });
-      },
+        setCurrentScreen: (screen) => {
+          set({ currentScreen: screen });
+        },
 
-      setFullscreen: (fullscreen) => {
-        set({ isFullscreen: fullscreen });
-        
-        if (fullscreen) {
-          document.documentElement.requestFullscreen?.();
-        } else {
-          document.exitFullscreen?.();
-        }
-      },
+        setFullscreen: (fullscreen) => {
+          set({ isFullscreen: fullscreen });
+          
+          if (fullscreen) {
+            document.documentElement.requestFullscreen?.();
+          } else {
+            document.exitFullscreen?.();
+          }
+        },
 
-      toggleFullscreen: () => {
-        const isFullscreen = get().isFullscreen;
-        get().setFullscreen(!isFullscreen);
-      },
+        toggleFullscreen: () => {
+          const isFullscreen = get().isFullscreen;
+          get().setFullscreen(!isFullscreen);
+        },
 
-      setShowDebugInfo: (show) => {
-        set({ showDebugInfo: show });
-      },
+        setShowDebugInfo: (show) => {
+          set({ showDebugInfo: show });
+        },
 
-      setShowPlayerNames: (show) => {
-        set({ showPlayerNames: show });
-      },
+        setShowPlayerNames: (show) => {
+          set({ showPlayerNames: show });
+        },
 
-      setShowCardCount: (show) => {
-        set({ showCardCount: show });
-      },
+        setShowCardCount: (show) => {
+          set({ showCardCount: show });
+        },
 
-      setShowGameLog: (show) => {
-        set({ showGameLog: show });
-      },
+        setShowGameLog: (show) => {
+          set({ showGameLog: show });
+        },
 
-      addGameLogMessage: (message) => {
-        const timestamp = new Date().toLocaleTimeString();
-        const formattedMessage = `[${timestamp}] ${message}`;
-        
-        set((state) => ({
-          gameLogMessages: [...state.gameLogMessages, formattedMessage].slice(-50), // 保留最近50条消息
-        }));
-      },
+        addGameLogMessage: (message) => {
+          const timestamp = new Date().toLocaleTimeString();
+          const formattedMessage = `[${timestamp}] ${message}`;
+          
+          set((state) => ({
+            gameLogMessages: [...state.gameLogMessages, formattedMessage].slice(-50), // 保留最近50条消息
+          }));
+        },
 
-      clearGameLog: () => {
-        set({ gameLogMessages: [] });
-      },
+        clearGameLog: () => {
+          set({ gameLogMessages: [] });
+        },
 
-      setSelectedCard: (card) => {
-        set({ selectedCard: card });
-      },
+        setSelectedCard: (card) => {
+          set({ selectedCard: card });
+        },
 
-      setShowColorPicker: (show) => {
-        set({ showColorPicker: show });
-      },
+        setShowColorPicker: (show) => {
+          set({ showColorPicker: show });
+        },
 
-      setShowGameMenu: (show) => {
-        set({ showGameMenu: show });
-      },
+        setShowGameMenu: (show) => {
+          set({ showGameMenu: show });
+        },
 
-      setShowPauseModal: (show) => {
-        set({ showPauseModal: show });
-      },
+        setShowPauseModal: (show) => {
+          set({ showPauseModal: show });
+        },
 
-      setShowSettingsModal: (show) => {
-        set({ showSettingsModal: show });
-      },
+        setShowSettingsModal: (show) => {
+          set({ showSettingsModal: show });
+        },
 
-      setShowHelpModal: (show) => {
-        set({ showHelpModal: show });
-      },
+        setShowHelpModal: (show) => {
+          set({ showHelpModal: show });
+        },
 
-      setShowQuitConfirmModal: (show) => {
-        set({ showQuitConfirmModal: show });
-      },
+        setShowQuitConfirmModal: (show) => {
+          set({ showQuitConfirmModal: show });
+        },
 
-      closeAllModals: () => {
-        set({
-          showPauseModal: false,
-          showSettingsModal: false,
-          showHelpModal: false,
-          showQuitConfirmModal: false,
-        });
-      },
+        closeAllModals: () => {
+          set({
+            showPauseModal: false,
+            showSettingsModal: false,
+            showHelpModal: false,
+            showQuitConfirmModal: false,
+          });
+        },
 
-      addNotification: (notification) => {
-        const id = `notification-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-        const timestamp = Date.now();
-        
-        const newNotification: Notification = {
-          ...notification,
-          id,
-          timestamp,
-          duration: notification.duration || 5000,
-        };
-        
-        set((state) => ({
-          notifications: [...state.notifications, newNotification],
-        }));
-        
-        // 自动移除通知
-        if (newNotification.duration && newNotification.duration > 0) {
-          setTimeout(() => {
-            get().removeNotification(id);
-          }, newNotification.duration);
-        }
-      },
+        addNotification: (notification) => {
+          const id = `notification-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+          const timestamp = Date.now();
+          
+          const newNotification: Notification = {
+            ...notification,
+            id,
+            timestamp,
+            duration: notification.duration || 5000,
+          };
+          
+          set((state) => ({
+            notifications: [...state.notifications, newNotification],
+          }));
+          
+          // 自动移除通知
+          if (newNotification.duration && newNotification.duration > 0) {
+            setTimeout(() => {
+              get().removeNotification(id);
+            }, newNotification.duration);
+          }
+        },
 
-      removeNotification: (id) => {
-        set((state) => ({
-          notifications: state.notifications.filter(n => n.id !== id),
-        }));
-      },
+        removeNotification: (id) => {
+          set((state) => ({
+            notifications: state.notifications.filter(n => n.id !== id),
+          }));
+        },
 
-      clearNotifications: () => {
-        set({ notifications: [] });
-      },
+        clearNotifications: () => {
+          set({ notifications: [] });
+        },
 
-      setLoading: (loading, message = '') => {
-        set({
-          isLoading: loading,
-          loadingMessage: message,
-        });
-      },
+        setLoading: (loading, message = '') => {
+          set({
+            isLoading: loading,
+            loadingMessage: message,
+          });
+        },
 
-      resetUI: () => {
-        set(initialState);
-      },
-    }),
-    {
-      name: 'uno-ui-store',
-    }
+        resetUI: () => {
+          set(initialState);
+        },
+      }),
+      {
+        name: 'uno-ui-store',
+        partialize: (state) => ({
+          // 只持久化用户偏好设置
+          theme: state.theme,
+          soundEnabled: state.soundEnabled,
+          musicEnabled: state.musicEnabled,
+          volume: state.volume,
+          animationsEnabled: state.animationsEnabled,
+          animationSpeed: state.animationSpeed,
+          showPlayerNames: state.showPlayerNames,
+          showCardCount: state.showCardCount,
+        }),
+      }
+    )
   )
 ); 

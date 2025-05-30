@@ -451,8 +451,9 @@ export const useGameStore = create<GameStore>()(
       }),
       {
         name: 'uno-game-storage',
-        partialize: (_state) => ({
-          // 只持久化必要的设置，不持久化游戏状态
+        partialize: (state) => ({
+          // 持久化游戏设置，但不持久化游戏状态
+          gameSettings: state.gameSettings,
         }),
       }
     ),

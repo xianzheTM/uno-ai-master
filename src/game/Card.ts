@@ -30,7 +30,7 @@ export class Card implements CardType {
   /**
    * 检查当前卡牌是否可以出在指定卡牌上
    */
-  canPlayOn(targetCard: Card): boolean {
+  canPlayOn(targetCard: Card, selectedColor?: CardColor): boolean {
     // 万能牌可以出在任何卡牌上
     if (this.type === 'wild' || this.type === 'wild_draw_four') {
       return true;
@@ -38,7 +38,9 @@ export class Card implements CardType {
 
     // 如果目标卡牌是万能牌，检查当前选择的颜色
     if (targetCard.type === 'wild' || targetCard.type === 'wild_draw_four') {
-      return this.color === targetCard.color;
+      // 如果指定了选择的颜色，使用选择的颜色；否则使用目标卡牌的颜色
+      const effectiveColor = selectedColor || targetCard.color;
+      return this.color === effectiveColor;
     }
 
     // 相同颜色可以出
@@ -48,8 +50,6 @@ export class Card implements CardType {
 
     // 相同数字或类型可以出
     return this.type === targetCard.type && this.value === targetCard.value;
-
-
   }
 
   /**

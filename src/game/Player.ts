@@ -1,5 +1,5 @@
 import { Card } from './Card';
-import { Player as PlayerType, PlayerType as PlayerTypeEnum, AIDifficulty, PlayerStatus } from '../types';
+import { Player as PlayerType, PlayerType as PlayerTypeEnum, AIDifficulty, PlayerStatus, CardColor } from '../types';
 
 /**
  * UNO玩家类
@@ -65,26 +65,26 @@ export class Player implements PlayerType {
   /**
    * 检查是否可以出指定的牌
    */
-  canPlayCard(cardId: string, currentCard: Card): boolean {
+  canPlayCard(cardId: string, currentCard: Card, selectedColor?: CardColor): boolean {
     const card = this.hand.find(c => c.id === cardId);
     if (!card) {
       return false;
     }
-    return card.canPlayOn(currentCard);
+    return card.canPlayOn(currentCard, selectedColor);
   }
 
   /**
    * 获取可以出的牌
    */
-  getPlayableCards(currentCard: Card): Card[] {
-    return this.hand.filter(card => card.canPlayOn(currentCard));
+  getPlayableCards(currentCard: Card, selectedColor?: CardColor): Card[] {
+    return this.hand.filter(card => card.canPlayOn(currentCard, selectedColor));
   }
 
   /**
    * 检查是否有可以出的牌
    */
-  hasPlayableCard(currentCard: Card): boolean {
-    return this.getPlayableCards(currentCard).length > 0;
+  hasPlayableCard(currentCard: Card, selectedColor?: CardColor): boolean {
+    return this.getPlayableCards(currentCard, selectedColor).length > 0;
   }
 
   /**
