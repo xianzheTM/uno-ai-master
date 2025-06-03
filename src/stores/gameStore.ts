@@ -5,6 +5,41 @@ import { Player } from '../game/Player';
 import { Card as UICard } from '../types/Card';
 import { AIDifficulty, CardColor, PlayerType } from '../types';
 import { CardAdapter } from '../utils/cardAdapter';
+import { useUIStore } from '../stores/uiStore';
+import { playGameSound, GameSoundType } from '../utils/soundManager';
+
+// 卡牌描述辅助函数
+const getCardDescription = (card: any, chosenColor?: CardColor): string => {
+  const colorNames = {
+    'red': '红色',
+    'yellow': '黄色', 
+    'green': '绿色',
+    'blue': '蓝色'
+  };
+
+  if (card.isWildCard()) {
+    if (card.type === 'wild_draw_four') {
+      return chosenColor ? `万能+4卡（选择${colorNames[chosenColor as keyof typeof colorNames]}）` : '万能+4卡';
+    } else {
+      return chosenColor ? `万能卡（选择${colorNames[chosenColor as keyof typeof colorNames]}）` : '万能卡';
+    }
+  }
+
+  const cardColor = colorNames[card.color as keyof typeof colorNames] || '未知颜色';
+  
+  switch (card.type) {
+    case 'skip':
+      return `${cardColor}跳过卡`;
+    case 'reverse':
+      return `${cardColor}反转卡`;
+    case 'draw_two':
+      return `${cardColor}+2卡`;
+    case 'number':
+      return `${cardColor}${card.value}`;
+    default:
+      return `${cardColor}卡牌`;
+  }
+};
 
 // 使用GameEngine实际返回的状态类型
 interface GameStoreState {
@@ -59,33 +94,8 @@ interface GameStoreActions {
 }
 
 interface GameStore extends GameStoreState, GameStoreActions {
-  // 游戏引擎和状态
+  // 游戏设置
   gameSettings?: any; // 保存游戏设置
-  
-  // 游戏控制方法
-  initializeGame: (config: { players: any[], settings: any }) => void;
-  playCard: (playerId: string, card: UICard, chosenColor?: CardColor) => boolean;
-  drawCard: (playerId: string) => boolean;
-  callUno: (playerId: string) => void;
-  updateGameState: () => void;
-  processAITurn: (playerId: string) => void;
-  
-  // 查询方法
-  getCurrentPlayer: () => Player | null;
-  getPlayableCards: (playerId: string) => Set<string>;
-  
-  // 游戏状态（从引擎同步）
-  players: Player[];
-  currentPlayerIndex: number;
-  direction: number;
-  currentCard: UICard | null;
-  currentColor: CardColor | null;
-  deck: UICard[];
-  discardPile: UICard[];
-  phase: string;
-  winner: Player | null;
-  drawCount: number;
-  turnCount: number;
 }
 
 export const useGameStore = create<GameStore>()(
@@ -190,9 +200,13 @@ export const useGameStore = create<GameStore>()(
             return;
           }
           
+          const { addGameLogMessage, addNotification, soundEnabled } = useUIStore.getState();
+          
           try {
             // 获取可出的牌
             const playableCards = gameEngine.getPlayableCards(playerId);
+            // 获取当前drawStack来确定需要抽多少张牌
+            const currentDrawStack = get().gameState.drawStack || 0;
             
             if (playableCards.length > 0) {
               // 随机选择一张可出的牌
@@ -208,22 +222,107 @@ export const useGameStore = create<GameStore>()(
               // 出牌
               const success = gameEngine.playCard(playerId, randomCard.id, chosenColor);
               if (success) {
+                // 获取卡牌描述
+                const cardDesc = getCardDescription(randomCard, chosenColor);
+                
+                // 添加游戏日志
+                addGameLogMessage(`${player.name} 出了 ${cardDesc}`);
+                
+                // 添加通知
+                addNotification({
+                  type: 'info',
+                  title: 'AI 出牌',
+                  message: `${player.name} 出了 ${cardDesc}`,
+                  duration: 5000
+                });
+                
+                // AI出牌音效
+                if (soundEnabled) {
+                  if (randomCard.isWildCard()) {
+                    playGameSound(GameSoundType.CARD_WILD);
+                  } else if (randomCard.type === 'skip') {
+                    playGameSound(GameSoundType.CARD_SKIP);
+                  } else if (randomCard.type === 'reverse') {
+                    playGameSound(GameSoundType.CARD_REVERSE);
+                  } else if (randomCard.type === 'draw_two' || randomCard.type === 'wild_draw_four') {
+                    playGameSound(GameSoundType.CARD_DRAW_TWO);
+                  } else {
+                    playGameSound(GameSoundType.CARD_PLAY);
+                  }
+                }
                 get().updateGameState();
               } else {
-                // 出牌失败，尝试摸牌
+                // 出牌失败，尝试摸牌 - 此时应该抽取drawStack指定的数量
+                const drawCount = currentDrawStack > 0 ? currentDrawStack : 1;
                 gameEngine.drawCard(playerId);
+                
+                // 添加游戏日志
+                const cardText = drawCount === 1 ? '1 张牌' : `${drawCount} 张牌`;
+                const reason = currentDrawStack > 0 ? '被罚抽' : '抽了';
+                addGameLogMessage(`${player.name} ${reason} ${cardText}`);
+                
+                // 添加通知
+                addNotification({
+                  type: currentDrawStack > 0 ? 'error' : 'warning',
+                  title: currentDrawStack > 0 ? 'AI 被罚抽牌' : 'AI 抽牌',
+                  message: `${player.name} ${reason} ${cardText}`,
+                  duration: 5000
+                });
+                
+                // AI摸牌音效
+                if (soundEnabled) {
+                  playGameSound(GameSoundType.CARD_DRAW);
+                }
                 get().updateGameState();
               }
             } else {
-              // 没有可出的牌，摸牌
+              // 没有可出的牌，摸牌 - 此时应该抽取drawStack指定的数量
+              const drawCount = currentDrawStack > 0 ? currentDrawStack : 1;
               gameEngine.drawCard(playerId);
+              
+              // 添加游戏日志
+              const cardText = drawCount === 1 ? '1 张牌' : `${drawCount} 张牌`;
+              const reason = currentDrawStack > 0 ? '被罚抽' : '没有可出的牌，抽了';
+              addGameLogMessage(`${player.name} ${reason} ${cardText}`);
+              
+              // 添加通知
+              addNotification({
+                type: currentDrawStack > 0 ? 'error' : 'info',
+                title: currentDrawStack > 0 ? 'AI 被罚抽牌' : 'AI 抽牌',
+                message: `${player.name} ${reason} ${cardText}`,
+                duration: 5000
+              });
+              
+              // AI摸牌音效
+              if (soundEnabled) {
+                playGameSound(GameSoundType.CARD_DRAW);
+              }
               get().updateGameState();
             }
           } catch (error) {
             console.error('AI决策错误:', error);
             // 出错时默认摸牌
             try {
+              const currentDrawStack = get().gameState.drawStack || 0;
+              const drawCount = currentDrawStack > 0 ? currentDrawStack : 1;
               gameEngine.drawCard(playerId);
+              
+              // 添加游戏日志
+              const cardText = drawCount === 1 ? '1 张牌' : `${drawCount} 张牌`;
+              addGameLogMessage(`${player.name} 出现错误，抽了 ${cardText}`);
+              
+              // 添加通知
+              addNotification({
+                type: 'error',
+                title: 'AI 错误',
+                message: `${player.name} 出现错误，抽了 ${cardText}`,
+                duration: 5000
+              });
+              
+              // AI摸牌音效
+              if (soundEnabled) {
+                playGameSound(GameSoundType.CARD_DRAW);
+              }
               get().updateGameState();
             } catch (drawError) {
               console.error('AI摸牌错误:', drawError);

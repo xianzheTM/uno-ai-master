@@ -6,6 +6,7 @@ import { ColorPicker } from './ColorPicker';
 import { PlayerInfo } from './PlayerInfo';
 import { Button } from '../ui/Button';
 import { Modal } from '../ui/Modal';
+import { NotificationContainer } from '../ui/NotificationContainer';
 import { useGameStore } from '@/stores/gameStore';
 import { useUIStore } from '@/stores/uiStore';
 import { Card as CardType, CardColor, Player } from '@/types';
@@ -46,6 +47,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     showGameMenu,
     setShowGameMenu,
     soundEnabled,
+    addNotification,
   } = useUIStore();
 
   const [selectedCardIndex, setSelectedCardIndex] = useState<number | undefined>(undefined);
@@ -216,9 +218,25 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     }
 
     // 直接出牌 - 传递Card对象
-    playCard(currentPlayer.id, card);
-    setSelectedCard(null);
-    setSelectedCardIndex(undefined);
+    const success = playCard(currentPlayer.id, card);
+    if (success) {
+      setSelectedCard(null);
+      setSelectedCardIndex(undefined);
+    } else {
+      // 出牌失败的处理
+      if (soundEnabled) {
+        playGameSound(GameSoundType.BUTTON_NEGATIVE);
+      }
+      console.warn('出牌失败:', card);
+      
+      // 添加出牌失败通知
+      addNotification({
+        type: 'error',
+        title: '出牌失败',
+        message: '该卡牌无法在当前情况下出牌',
+        duration: 3000
+      });
+    }
   };
 
   // 处理颜色选择
@@ -230,10 +248,28 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     }
     
     // 传递Card对象和选择的颜色
-    playCard(currentPlayer.id, selectedCard, color);
-    setShowColorPicker(false);
-    setSelectedCard(null);
-    setSelectedCardIndex(undefined);
+    const success = playCard(currentPlayer.id, selectedCard, color);
+    if (success) {
+      setShowColorPicker(false);
+      setSelectedCard(null);
+      setSelectedCardIndex(undefined);
+    } else {
+      // 万能卡出牌失败的处理
+      if (soundEnabled) {
+        playGameSound(GameSoundType.BUTTON_NEGATIVE);
+      }
+      console.warn('万能卡出牌失败:', selectedCard);
+      
+      // 添加出牌失败通知
+      addNotification({
+        type: 'error',
+        title: '出牌失败',
+        message: '万能卡无法在当前情况下出牌',
+        duration: 3000
+      });
+      
+      // 保持颜色选择器打开，让用户重新选择
+    }
   };
 
   // 处理抽牌
@@ -360,6 +396,29 @@ export const GameBoard: React.FC<GameBoardProps> = ({
         return '';
     }
   };
+
+  // 设置全局通知函数，供GameEngine使用
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      (window as any).gameNotification = (notification: any) => {
+        // 添加通知
+        addNotification(notification);
+        
+        // 根据通知类型播放音效
+        if (soundEnabled) {
+          if (notification.title === 'UNO违规') {
+            playGameSound(GameSoundType.BUTTON_NEGATIVE);
+          }
+        }
+      };
+    }
+    
+    return () => {
+      if (typeof window !== 'undefined') {
+        delete (window as any).gameNotification;
+      }
+    };
+  }, [addNotification, soundEnabled]);
 
   if (gameState.phase === 'finished') {
     return (
@@ -669,6 +728,9 @@ export const GameBoard: React.FC<GameBoardProps> = ({
           </Button>
         </div>
       </Modal>
+      
+      {/* 通知容器 */}
+      <NotificationContainer />
     </div>
   );
 }; 

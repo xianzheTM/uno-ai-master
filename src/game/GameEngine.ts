@@ -362,6 +362,19 @@ export class GameEngine {
     // UNO违规罚抽2张牌
     const penaltyCards = this.deck.drawCards(2);
     player.addCards(penaltyCards);
+    
+    // 通知玩家UNO违规
+    console.log(`玩家 ${player.name} UNO违规，罚抽 2 张牌`);
+    
+    // 如果是在浏览器环境，尝试发送通知
+    if (typeof window !== 'undefined' && (window as any).gameNotification) {
+      (window as any).gameNotification({
+        type: 'error',
+        title: 'UNO违规',
+        message: `${player.name} 手牌剩1张但未宣告UNO，罚抽 2 张牌！`,
+        duration: 5000
+      });
+    }
   }
 
   /**
