@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { clsx } from 'clsx';
 import { PlayerHand } from './PlayerHand';
 import { CurrentCard } from './CurrentCard';
@@ -10,6 +10,7 @@ import { useGameStore } from '@/stores/gameStore';
 import { useUIStore } from '@/stores/uiStore';
 import { Card as CardType, CardColor, Player } from '@/types';
 import { CardAdapter } from '@/utils/cardAdapter';
+import { playGameSound, playGameMusic, stopGameMusic, GameSoundType } from '@/utils/soundManager';
 
 interface GameBoardProps {
   onExitGame?: () => void;
@@ -44,6 +45,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     setShowColorPicker,
     showGameMenu,
     setShowGameMenu,
+    soundEnabled,
   } = useUIStore();
 
   const [selectedCardIndex, setSelectedCardIndex] = useState<number | undefined>(undefined);
@@ -51,9 +53,74 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   const [showChallengeButtons, setShowChallengeButtons] = useState(false);
   const [challengeResult, setChallengeResult] = useState<string | null>(null);
 
+  // 用于跟踪游戏状态变化和播放音效
+  const prevGameStateRef = useRef(gameState);
+  const musicPlayedRef = useRef(false);
+
   const currentPlayer = getCurrentPlayer();
   const isCurrentPlayerHuman = currentPlayer && !currentPlayer.isAI;
   const playableCards = currentPlayer ? getPlayableCards(currentPlayer.id) : new Set<string>();
+
+  // 播放背景音乐
+  useEffect(() => {
+    if (soundEnabled && gameState.phase === 'playing' && !musicPlayedRef.current) {
+      playGameMusic(GameSoundType.GAME_MUSIC);
+      musicPlayedRef.current = true;
+    }
+  }, [soundEnabled, gameState.phase]);
+
+  // 监听游戏状态变化，播放相应音效
+  useEffect(() => {
+    const prevState = prevGameStateRef.current;
+    
+    if (!soundEnabled) return;
+
+    // 游戏开始音效（只在第一次进入playing阶段时播放）
+    if (prevState.phase !== 'playing' && gameState.phase === 'playing') {
+      playGameSound(GameSoundType.GAME_START);
+    }
+
+    // 游戏结束音效
+    if (prevState.phase !== 'finished' && gameState.phase === 'finished') {
+      // 停止背景音乐
+      stopGameMusic();
+      if (gameState.winner) {
+        playGameSound(GameSoundType.VICTORY);
+      }
+    }
+
+    // 当前玩家变化时的音效（只在轮到人类玩家时播放）
+    if (prevState.currentPlayerIndex !== gameState.currentPlayerIndex) {
+      const newCurrentPlayer = gameState.players[gameState.currentPlayerIndex];
+      if (newCurrentPlayer && !newCurrentPlayer.isAI) {
+        playGameSound(GameSoundType.CLOCK_BELL);
+      }
+    }
+
+    prevGameStateRef.current = gameState;
+  }, [gameState.phase, gameState.currentPlayerIndex, gameState.winner, soundEnabled]);
+
+  // 组件卸载时停止音乐
+  useEffect(() => {
+    return () => {
+      stopGameMusic();
+    };
+  }, []);
+
+  // 键盘快捷键监听
+  useEffect(() => {
+    const handleKeyPress = (event: KeyboardEvent) => {
+      if (event.key.toLowerCase() === 'm') {
+        const { setSoundEnabled } = useUIStore.getState();
+        setSoundEnabled(!soundEnabled);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => {
+      window.removeEventListener('keydown', handleKeyPress);
+    };
+  }, [soundEnabled]);
 
   // 检查是否需要显示UNO按钮
   useEffect(() => {
@@ -90,18 +157,22 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   const createSecureHandForOtherPlayer = (handSize: number): CardType[] => {
     return Array(handSize).fill(null).map((_, index) => ({
       id: `hidden-${index}`,
-      type: 'number' as const,
-      color: 'red' as const,
-      value: '0',
+      type: 'number' as any,
+      color: 'red' as any,
+      value: '0' as any,
       cardValue: 0,
       canPlayOn: () => false,
-      toJSON: () => ({ type: 'number', color: 'red', value: '0' })
+      toJSON: () => ({ type: 'number' as any, color: 'red' as any, value: '0' as any })
     }));
   };
 
   // 处理卡牌点击
   const handleCardClick = (card: CardType, index: number) => {
     if (!currentPlayer || currentPlayer.isAI || !isCurrentPlayerHuman) return;
+    
+    if (soundEnabled) {
+      playGameSound(GameSoundType.CARD_SELECT);
+    }
     
     setSelectedCard(card);
     setSelectedCardIndex(index);
@@ -113,9 +184,27 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     
     // 使用CardAdapter检查出牌合法性
     if (gameState.currentCard && !CardAdapter.canUICardPlayOn(card, gameState.currentCard)) {
-      // 显示错误提示
+      // 播放错误音效
+      if (soundEnabled) {
+        playGameSound(GameSoundType.BUTTON_NEGATIVE);
+      }
       console.warn('无效出牌:', card);
       return;
+    }
+
+    // 播放出牌音效
+    if (soundEnabled) {
+      if (CardAdapter.isUICardWild(card)) {
+        playGameSound(GameSoundType.CARD_WILD);
+      } else if (card.type === 'skip') {
+        playGameSound(GameSoundType.CARD_SKIP);
+      } else if (card.type === 'reverse') {
+        playGameSound(GameSoundType.CARD_REVERSE);
+      } else if (card.type === 'draw_two' || card.type === 'wild_draw_four') {
+        playGameSound(GameSoundType.CARD_DRAW_TWO);
+      } else {
+        playGameSound(GameSoundType.CARD_PLAY);
+      }
     }
 
     // 如果是万能卡，显示颜色选择器
@@ -136,6 +225,10 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   const handleColorSelect = (color: CardColor) => {
     if (!selectedCard || !currentPlayer) return;
     
+    if (soundEnabled) {
+      playGameSound(GameSoundType.BUTTON_CLICK);
+    }
+    
     // 传递Card对象和选择的颜色
     playCard(currentPlayer.id, selectedCard, color);
     setShowColorPicker(false);
@@ -146,12 +239,22 @@ export const GameBoard: React.FC<GameBoardProps> = ({
   // 处理抽牌
   const handleDrawCard = () => {
     if (!currentPlayer || currentPlayer.isAI || !isCurrentPlayerHuman) return;
+    
+    if (soundEnabled) {
+      playGameSound(GameSoundType.CARD_DRAW);
+    }
+    
     drawCard(currentPlayer.id);
   };
 
   // 处理UNO宣告
   const handleUnoCall = () => {
     if (!currentPlayer) return;
+    
+    if (soundEnabled) {
+      playGameSound(GameSoundType.UNO_CALL);
+    }
+    
     callUno(currentPlayer.id);
     setShowUnoButton(false);
   };
@@ -163,8 +266,14 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     const result = challengeUnoViolation(currentPlayer.id, suspectedPlayerId);
     if (result.success) {
       setChallengeResult(`质疑成功！玩家 ${suspectedPlayerId} 罚抽 ${result.penaltyCards} 张牌`);
+      if (soundEnabled) {
+        playGameSound(GameSoundType.ACHIEVEMENT);
+      }
     } else {
       setChallengeResult('质疑失败！该玩家没有违规');
+      if (soundEnabled) {
+        playGameSound(GameSoundType.BUTTON_NEGATIVE);
+      }
     }
     
     // 3秒后清除结果提示
@@ -179,13 +288,26 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     const result = challengeWildDrawFour(currentPlayer.id);
     if (result.success) {
       setChallengeResult(`质疑成功！出牌者有其他可出的牌，罚抽 ${result.penaltyCards} 张牌`);
+      if (soundEnabled) {
+        playGameSound(GameSoundType.ACHIEVEMENT);
+      }
     } else {
       setChallengeResult(`质疑失败！出牌者合法使用万能+4卡，你罚抽 ${result.penaltyCards} 张牌`);
+      if (soundEnabled) {
+        playGameSound(GameSoundType.BUTTON_NEGATIVE);
+      }
     }
     
     // 3秒后清除结果提示
     setTimeout(() => setChallengeResult(null), 3000);
     setShowChallengeButtons(false);
+  };
+
+  // 按钮点击音效 - 只用于普通按钮
+  const handleButtonClick = () => {
+    if (soundEnabled) {
+      playGameSound(GameSoundType.BUTTON_CLICK);
+    }
   };
 
   // 获取玩家布局位置
@@ -311,6 +433,14 @@ export const GameBoard: React.FC<GameBoardProps> = ({
             </Button>
           )}
           
+          {/* 音效状态指示器 */}
+          <div className="flex items-center gap-1 text-sm text-gray-600">
+            <span className={soundEnabled ? 'text-green-600' : 'text-red-600'}>
+              {soundEnabled ? '🔊' : '🔇'}
+            </span>
+            <span className="text-xs hidden sm:inline">按 M 切换</span>
+          </div>
+          
           {/* 质疑按钮 */}
           {showChallengeButtons && (
             <div className="flex items-center gap-2">
@@ -354,7 +484,10 @@ export const GameBoard: React.FC<GameBoardProps> = ({
           
           <Button
             variant="secondary"
-            onClick={() => setShowGameMenu(true)}
+            onClick={() => {
+              handleButtonClick();
+              setShowGameMenu(true);
+            }}
           >
             菜单
           </Button>
@@ -486,6 +619,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
         isOpen={showColorPicker}
         onColorSelect={handleColorSelect}
         onCancel={() => {
+          if (soundEnabled) playGameSound(GameSoundType.BUTTON_BACK);
           setShowColorPicker(false);
           setSelectedCard(null);
           setSelectedCardIndex(undefined);
@@ -503,6 +637,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
         <div className="space-y-4">
           <Button
             onClick={() => {
+              handleButtonClick();
               setShowGameMenu(false);
               // 重新开始游戏逻辑
             }}
@@ -512,6 +647,8 @@ export const GameBoard: React.FC<GameBoardProps> = ({
           </Button>
           <Button
             onClick={() => {
+              if (soundEnabled) playGameSound(GameSoundType.BUTTON_BACK);
+              stopGameMusic();
               setShowGameMenu(false);
               onExitGame?.();
             }}
@@ -521,7 +658,10 @@ export const GameBoard: React.FC<GameBoardProps> = ({
             退出游戏
           </Button>
           <Button
-            onClick={() => setShowGameMenu(false)}
+            onClick={() => {
+              handleButtonClick();
+              setShowGameMenu(false);
+            }}
             variant="secondary"
             className="w-full"
           >

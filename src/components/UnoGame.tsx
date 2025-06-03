@@ -3,6 +3,7 @@ import { GameSetup } from './game/GameSetup';
 import { GameBoard } from './game/GameBoard';
 import { useGameStore } from '@/stores/gameStore';
 import { useUIStore } from '@/stores/uiStore';
+import { playGameMusic, stopGameMusic, GameSoundType } from '@/utils/soundManager';
 
 type GamePhase = 'setup' | 'playing' | 'finished';
 
@@ -59,7 +60,14 @@ export const UnoGame: React.FC = () => {
   const [gamePhase, setGamePhase] = useState<GamePhase>('setup');
   
   const { gameState, resetGame } = useGameStore();
-  const { resetUI } = useUIStore();
+  const { resetUI, musicEnabled } = useUIStore();
+
+  // 播放菜单音乐
+  useEffect(() => {
+    if (musicEnabled && gamePhase === 'setup') {
+      playGameMusic(GameSoundType.MENU_MUSIC);
+    }
+  }, [musicEnabled, gamePhase]);
 
   // 监听游戏状态变化
   useEffect(() => {
@@ -67,6 +75,8 @@ export const UnoGame: React.FC = () => {
       setGamePhase('setup');
     } else if (gameState.phase === 'playing') {
       setGamePhase('playing');
+      // 切换到游戏中时停止菜单音乐
+      stopGameMusic();
     } else if (gameState.phase === 'finished') {
       setGamePhase('finished');
     }
@@ -82,6 +92,11 @@ export const UnoGame: React.FC = () => {
     resetGame();
     resetUI();
     setGamePhase('setup');
+    
+    // 重新播放菜单音乐
+    if (musicEnabled) {
+      playGameMusic(GameSoundType.MENU_MUSIC);
+    }
   };
 
   // 根据游戏阶段渲染不同的界面

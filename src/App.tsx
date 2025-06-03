@@ -3,9 +3,23 @@ import { UtilsDemo } from './components/UtilsDemo'
 import { UIDemo } from './components/UIDemo'
 import { GameDemo } from './components/GameDemo'
 import { UnoGame } from './components/UnoGame'
+import SoundDemo from './components/SoundDemo'
+import { playGameSound, GameSoundType } from './utils/soundManager'
 
 function App() {
-  const [currentView, setCurrentView] = useState<'home' | 'utils' | 'ui' | 'game' | 'play'>('home')
+  const [currentView, setCurrentView] = useState<'home' | 'utils' | 'ui' | 'game' | 'play' | 'sound'>('home')
+
+  // 处理菜单音效
+  const handleMenuClick = (view: typeof currentView) => {
+    playGameSound(GameSoundType.BUTTON_CLICK);
+    setCurrentView(view);
+  };
+
+  // 处理返回按钮音效
+  const handleBackClick = () => {
+    playGameSound(GameSoundType.BUTTON_BACK);
+    setCurrentView('home');
+  };
 
   if (currentView === 'utils') {
     return (
@@ -13,7 +27,7 @@ function App() {
         <div className="container mx-auto px-4">
           <div className="mb-6 text-center">
             <button
-              onClick={() => setCurrentView('home')}
+              onClick={handleBackClick}
               className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
             >
               ← 返回主页
@@ -31,7 +45,7 @@ function App() {
         <div className="container mx-auto px-4">
           <div className="mb-6 text-center">
             <button
-              onClick={() => setCurrentView('home')}
+              onClick={handleBackClick}
               className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
             >
               ← 返回主页
@@ -49,13 +63,31 @@ function App() {
         <div className="container mx-auto px-4">
           <div className="mb-6 text-center">
             <button
-              onClick={() => setCurrentView('home')}
+              onClick={handleBackClick}
               className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
             >
               ← 返回主页
             </button>
           </div>
           <GameDemo />
+        </div>
+      </div>
+    )
+  }
+
+  if (currentView === 'sound') {
+    return (
+      <div className="min-h-screen bg-gray-100 py-8">
+        <div className="container mx-auto px-4">
+          <div className="mb-6 text-center">
+            <button
+              onClick={handleBackClick}
+              className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
+            >
+              ← 返回主页
+            </button>
+          </div>
+          <SoundDemo />
         </div>
       </div>
     )
@@ -99,7 +131,7 @@ function App() {
         <div className="space-y-6">
           <div className="bg-gradient-to-r from-green-500 to-blue-500 rounded-2xl p-1 shadow-xl">
               <button
-                onClick={() => setCurrentView('play')}
+                onClick={() => handleMenuClick('play')}
               className="w-full px-8 py-6 bg-white text-gray-800 rounded-2xl hover:bg-gray-50 transition-all duration-300 font-bold text-2xl hover:shadow-lg transform hover:scale-105"
               >
                 🎮 开始游戏
@@ -112,24 +144,30 @@ function App() {
               🔧 开发者选项
             </summary>
             <div className="px-6 pb-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
               <button
-                onClick={() => setCurrentView('utils')}
+                onClick={() => handleMenuClick('utils')}
                   className="px-4 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium text-sm"
               >
                   🎯 工具函数演示
               </button>
               <button
-                onClick={() => setCurrentView('ui')}
+                onClick={() => handleMenuClick('ui')}
                   className="px-4 py-3 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors font-medium text-sm"
               >
                   🎨 UI组件演示
               </button>
               <button
-                onClick={() => setCurrentView('game')}
+                onClick={() => handleMenuClick('game')}
                   className="px-4 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-medium text-sm"
               >
                   🎮 游戏组件演示
+              </button>
+              <button
+                onClick={() => handleMenuClick('sound')}
+                  className="px-4 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors font-medium text-sm"
+              >
+                  🎵 音效试听
               </button>
               </div>
             </div>

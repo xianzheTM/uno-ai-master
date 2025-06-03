@@ -1,7 +1,7 @@
 import React from 'react';
 import { useUIStore } from '@/stores/uiStore';
 import { Button } from './Button';
-import { soundManager } from '@/utils/soundManager';
+import { setGameSoundEnabled, setGameSoundVolume, setGameMusicEnabled } from '@/utils/soundManager';
 
 interface SettingsProps {
   onClose: () => void;
@@ -21,7 +21,6 @@ export const Settings: React.FC<SettingsProps> = ({ onClose }) => {
     showPlayerNames,
     showCardCount,
     setTheme,
-    toggleTheme,
     setSoundEnabled,
     setMusicEnabled,
     setVolume,
@@ -33,9 +32,10 @@ export const Settings: React.FC<SettingsProps> = ({ onClose }) => {
 
   // 更新音效管理器设置
   React.useEffect(() => {
-    soundManager.setEnabled(soundEnabled);
-    soundManager.setVolume(volume);
-  }, [soundEnabled, volume]);
+    setGameSoundEnabled(soundEnabled);
+    setGameMusicEnabled(musicEnabled);
+    setGameSoundVolume(volume);
+  }, [soundEnabled, musicEnabled, volume]);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
