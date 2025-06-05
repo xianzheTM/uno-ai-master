@@ -1,0 +1,287 @@
+{
+  "resources": [
+    "mygameaudio.mp3"
+  ],
+  "spritemap": {
+    "DIA_M_25_Super": {
+      "start": 0,
+      "end": 1.3855555555555557,
+      "loop": false
+    },
+    "DIA_M_26_DontStop": {
+      "start": 2,
+      "end": 3.333310657596372,
+      "loop": false
+    },
+    "MUS_Gameplay_B_Loop_Countdown": {
+      "start": 4,
+      "end": 16.748820861678006,
+      "loop": true
+    },
+    "MUS_Gameplay_B_Loop_Play": {
+      "start": 17,
+      "end": 52.60596371882086,
+      "loop": true
+    },
+    "MUS_Login_MainMenu": {
+      "start": 53,
+      "end": 72.59290249433107,
+      "loop": false
+    },
+    "MUS_MainMenu_B": {
+      "start": 73,
+      "end": 108.89331065759637,
+      "loop": false
+    },
+    "p20-DIA_Emoji_28_Haha": {
+      "start": 109,
+      "end": 109.932358276644,
+      "loop": false
+    },
+    "p20-DIA_Emoji_32_Anger_02": {
+      "start": 110,
+      "end": 110.59492063492064,
+      "loop": false
+    },
+    "p20-DIA_Emoji_33_Sad": {
+      "start": 111,
+      "end": 111.91691609977325,
+      "loop": false
+    },
+    "p20-DIA_Emoji_34_Laugh_03": {
+      "start": 112,
+      "end": 112.63340136054421,
+      "loop": false
+    },
+    "SFX_Card_Deal_Comm": {
+      "start": 113,
+      "end": 113.39290249433107,
+      "loop": false
+    },
+    "SFX_Card_Draw_Comm": {
+      "start": 114,
+      "end": 114.26229024943311,
+      "loop": false
+    },
+    "SFX_Card_Effect_ArrowSwitch": {
+      "start": 115,
+      "end": 116.35943310657596,
+      "loop": false
+    },
+    "SFX_Card_Effect_Punish_Player": {
+      "start": 117,
+      "end": 118.04596371882086,
+      "loop": false
+    },
+    "SFX_Card_Effect_Show_Norm_Comm": {
+      "start": 119,
+      "end": 120.28106575963719,
+      "loop": false
+    },
+    "SFX_Card_Effect_Show_Punish_Comm": {
+      "start": 121,
+      "end": 121.54963718820862,
+      "loop": false
+    },
+    "SFX_Card_Effect_Stop": {
+      "start": 122,
+      "end": 122.83698412698412,
+      "loop": false
+    },
+    "SFX_Card_Effect_UTurn": {
+      "start": 123,
+      "end": 123.81086167800453,
+      "loop": false
+    },
+    "SFX_Card_Effect_ZeroSeven_Switch": {
+      "start": 124,
+      "end": 125.17657596371882,
+      "loop": false
+    },
+    "SFX_Card_OpenDeck": {
+      "start": 126,
+      "end": 126.34065759637188,
+      "loop": false
+    },
+    "SFX_Card_Pick": {
+      "start": 127,
+      "end": 127.07943310657596,
+      "loop": false
+    },
+    "SFX_Card_Select": {
+      "start": 128,
+      "end": 128.05331065759637,
+      "loop": false
+    },
+    "SFX_Card_Start_Comm": {
+      "start": 129,
+      "end": 132.97167800453514,
+      "loop": false
+    },
+    "SFX_Gift_Flyby": {
+      "start": 133,
+      "end": 134.75126984126985,
+      "loop": false
+    },
+    "SFX_Gift_Open": {
+      "start": 135,
+      "end": 136.20269841269842,
+      "loop": false
+    },
+    "SFX_Item_Tomato_egg_01": {
+      "start": 137,
+      "end": 137.6280045351474,
+      "loop": false
+    },
+    "SFX_Scen_Entry_Player": {
+      "start": 138,
+      "end": 139.04596371882087,
+      "loop": false
+    },
+    "SFX_UI_Achievement": {
+      "start": 140,
+      "end": 142.7961678004535,
+      "loop": false
+    },
+    "SFX_UI_Button_AddFriend": {
+      "start": 143,
+      "end": 143.6018820861678,
+      "loop": false
+    },
+    "SFX_UI_Button_Back": {
+      "start": 144,
+      "end": 144.28841269841269,
+      "loop": false
+    },
+    "SFX_UI_Button_Click": {
+      "start": 145,
+      "end": 145.15780045351474,
+      "loop": false
+    },
+    "SFX_UI_Button_Gift": {
+      "start": 146,
+      "end": 146.96759637188208,
+      "loop": false
+    },
+    "SFX_UI_Button_Negative": {
+      "start": 147,
+      "end": 147.28841269841269,
+      "loop": false
+    },
+    "SFX_UI_Button_Password": {
+      "start": 148,
+      "end": 148.13167800453516,
+      "loop": false
+    },
+    "SFX_UI_Button_ThumbsUp": {
+      "start": 149,
+      "end": 149.73249433106577,
+      "loop": false
+    },
+    "SFX_UI_Clock_Bell": {
+      "start": 150,
+      "end": 151.15045351473924,
+      "loop": false
+    },
+    "SFX_UI_Clock_Tick": {
+      "start": 152,
+      "end": 153.15045351473924,
+      "loop": false
+    },
+    "SFX_UI_Coins_Get": {
+      "start": 154,
+      "end": 155.17657596371882,
+      "loop": false
+    },
+    "SFX_UI_CountDown_E_10s": {
+      "start": 156,
+      "end": 166.2410657596372,
+      "loop": false
+    },
+    "SFX_UI_CountDown_E_5s": {
+      "start": 167,
+      "end": 173.19208616780045,
+      "loop": false
+    },
+    "SFX_UI_Deck_Star": {
+      "start": 174,
+      "end": 175.8296371882086,
+      "loop": false
+    },
+    "SFX_UI_Dice": {
+      "start": 176,
+      "end": 176.28841269841269,
+      "loop": false
+    },
+    "SFX_UI_Flip": {
+      "start": 177,
+      "end": 177.2622902494331,
+      "loop": false
+    },
+    "SFX_UI_GameStart_C_full_01": {
+      "start": 178,
+      "end": 186.17739229024943,
+      "loop": false
+    },
+    "SFX_UI_Get_Diamond": {
+      "start": 187,
+      "end": 188.17657596371882,
+      "loop": false
+    },
+    "SFX_UI_Get_Token": {
+      "start": 189,
+      "end": 189.83698412698413,
+      "loop": false
+    },
+    "SFX_UI_Message": {
+      "start": 190,
+      "end": 191.07208616780045,
+      "loop": false
+    },
+    "SFX_UI_Star_Get": {
+      "start": 192,
+      "end": 194.45657596371882,
+      "loop": false
+    },
+    "SFX_UI_Victory_Champ": {
+      "start": 195,
+      "end": 219.55616780045352,
+      "loop": true
+    },
+    "SFX_UI_Victory_Token": {
+      "start": 220,
+      "end": 220.13167800453516,
+      "loop": false
+    },
+    "SFX_UI_Victory": {
+      "start": 221,
+      "end": 245.55616780045352,
+      "loop": true
+    },
+    "SFX_UI_Wave": {
+      "start": 246,
+      "end": 248.35208616780045,
+      "loop": false
+    },
+    "SFX_UI_Window_Popup_Ingame": {
+      "start": 249,
+      "end": 249.5496371882086,
+      "loop": false
+    },
+    "SFX_UI_Window_Popup": {
+      "start": 250,
+      "end": 251.09820861678006,
+      "loop": false
+    },
+    "Uno_SFX_UI_Coins_Get": {
+      "start": 252,
+      "end": 253.17698412698414,
+      "loop": false
+    },
+    "VOC_UNO_01_M": {
+      "start": 254,
+      "end": 255.41167800453513,
+      "loop": false
+    }
+  }
+}
