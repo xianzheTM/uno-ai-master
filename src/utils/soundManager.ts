@@ -69,9 +69,8 @@ class SoundManager {
    */
   private async initializeSounds(): Promise<void> {
     try {
-      // 获取base路径，考虑GitHub Pages部署时的路径
-      const basePath = import.meta.env.BASE_URL || '/';
-      const configUrl = `${basePath}sounds/mygameaudio.json`.replace(/\/+/g, '/');
+      // 使用相对路径，避免域名重定向问题
+      const configUrl = './sounds/mygameaudio.json';
       
       const response = await fetch(configUrl);
       if (!response.ok) {
@@ -83,7 +82,7 @@ class SoundManager {
       
       // 初始化音频元素
       if (config.resources.length > 0) {
-        const audioUrl = `${basePath}sounds/${config.resources[0]}`.replace(/\/+/g, '/');
+        const audioUrl = `./sounds/${config.resources[0]}`;
         
         // 音效播放器
         this.audio = new Audio(audioUrl);
