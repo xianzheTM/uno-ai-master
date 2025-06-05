@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>音效路径测试</title>
+</head>
+<body>
+    <h1>音效路径测试</h1>
+    <button onclick="testSound()">测试音效</button>
+    <div id="result"></div>
+
+    <script>
+        async function testSound() {
+            const result = document.getElementById('result');
+            
+            // 测试不同的路径
+            const paths = [
+                './sounds/mygameaudio.json',
+                '/uno-ai-master/sounds/mygameaudio.json', 
+                'sounds/mygameaudio.json',
+                '/sounds/mygameaudio.json'
+            ];
+            
+            result.innerHTML = '<h3>测试结果:</h3>';
+            
+            for (const path of paths) {
+                try {
+                    const response = await fetch(path);
+                    const status = response.status;
+                    result.innerHTML += `<p>路径: ${path} - 状态: ${status} ${status === 200 ? '✅' : '❌'}</p>`;
+                } catch (error) {
+                    result.innerHTML += `<p>路径: ${path} - 错误: ${error.message} ❌</p>`;
+                }
+            }
+            
+            result.innerHTML += `<p><strong>当前页面URL:</strong> ${window.location.href}</p>`;
+        }
+    </script>
+</body>
+</html> 
