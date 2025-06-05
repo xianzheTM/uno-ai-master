@@ -30,8 +30,8 @@ const SoundDemo: React.FC = () => {
       setIsLoading(true);
       setError(null);
       try {
-        // 使用GitHub原始域名的绝对路径，绕过自定义域名重定向问题
-        const configUrl = 'https://xianzhetm.github.io/uno-ai-master/sounds/mygameaudio.json';
+        // 使用GitHub raw文件服务，允许跨域访问
+        const configUrl = 'https://raw.githubusercontent.com/xianzheTM/uno-ai-master/gh-pages/sounds/mygameaudio.json';
         
         const response = await fetch(configUrl);
         if (!response.ok) {
@@ -52,8 +52,8 @@ const SoundDemo: React.FC = () => {
   // 初始化音频元素
   useEffect(() => {
     if (soundConfig && !audioRef.current) {
-      // 使用GitHub原始域名的绝对路径，绕过自定义域名重定向问题
-      const audioUrl = `https://xianzhetm.github.io/uno-ai-master/sounds/${soundConfig.resources[0]}`;
+      // 使用GitHub raw文件服务，允许跨域访问
+      const audioUrl = `https://raw.githubusercontent.com/xianzheTM/uno-ai-master/gh-pages/sounds/${soundConfig.resources[0]}`;
       
       audioRef.current = new Audio(audioUrl);
       audioRef.current.addEventListener('ended', () => {

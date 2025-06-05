@@ -69,8 +69,8 @@ class SoundManager {
    */
   private async initializeSounds(): Promise<void> {
     try {
-      // 使用GitHub原始域名的绝对路径，绕过自定义域名重定向问题
-      const configUrl = 'https://xianzhetm.github.io/uno-ai-master/sounds/mygameaudio.json';
+      // 使用GitHub raw文件服务，允许跨域访问
+      const configUrl = 'https://raw.githubusercontent.com/xianzheTM/uno-ai-master/gh-pages/sounds/mygameaudio.json';
       
       const response = await fetch(configUrl);
       if (!response.ok) {
@@ -82,7 +82,7 @@ class SoundManager {
       
       // 初始化音频元素
       if (config.resources.length > 0) {
-        const audioUrl = `https://xianzhetm.github.io/uno-ai-master/sounds/${config.resources[0]}`;
+        const audioUrl = `https://raw.githubusercontent.com/xianzheTM/uno-ai-master/gh-pages/sounds/${config.resources[0]}`;
         
         // 音效播放器
         this.audio = new Audio(audioUrl);
