@@ -30,7 +30,11 @@ const SoundDemo: React.FC = () => {
       setIsLoading(true);
       setError(null);
       try {
-        const response = await fetch('/sounds/mygameaudio.json');
+        // 获取base路径，考虑GitHub Pages部署时的路径
+        const basePath = import.meta.env.BASE_URL || '/';
+        const configUrl = `${basePath}sounds/mygameaudio.json`.replace(/\/+/g, '/');
+        
+        const response = await fetch(configUrl);
         if (!response.ok) {
           throw new Error('无法加载音效配置文件');
         }
@@ -49,7 +53,11 @@ const SoundDemo: React.FC = () => {
   // 初始化音频元素
   useEffect(() => {
     if (soundConfig && !audioRef.current) {
-      audioRef.current = new Audio('/sounds/' + soundConfig.resources[0]);
+      // 获取base路径，考虑GitHub Pages部署时的路径
+      const basePath = import.meta.env.BASE_URL || '/';
+      const audioUrl = `${basePath}sounds/${soundConfig.resources[0]}`.replace(/\/+/g, '/');
+      
+      audioRef.current = new Audio(audioUrl);
       audioRef.current.addEventListener('ended', () => {
         setCurrentlyPlaying(null);
       });
