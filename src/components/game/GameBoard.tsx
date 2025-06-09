@@ -4,6 +4,7 @@ import { PlayerHand } from './PlayerHand';
 import { CurrentCard } from './CurrentCard';
 import { ColorPicker } from './ColorPicker';
 import { PlayerInfo } from './PlayerInfo';
+import { TurnTimer } from './TurnTimer';
 import { Button } from '../ui/Button';
 import { Modal } from '../ui/Modal';
 import { NotificationContainer } from '../ui/NotificationContainer';
@@ -37,6 +38,7 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     challengeWildDrawFour,
     canChallengeUnoViolation,
     canChallengeWildDrawFour,
+    gameSettings,
   } = useGameStore();
 
   const {
@@ -346,6 +348,41 @@ export const GameBoard: React.FC<GameBoardProps> = ({
     }
   };
 
+  // 处理回合超时
+  const handleTurnTimeout = () => {
+    if (!currentPlayer || currentPlayer.isAI || !isCurrentPlayerHuman) return;
+    
+    // 防止重复处理（通过检查当前时间戳）
+    const now = Date.now();
+    const lastTimeoutKey = `timeout_${currentPlayer.id}_${gameState.turnCount}`;
+    if (window.localStorage.getItem(lastTimeoutKey)) {
+      return; // 这个回合已经处理过超时
+    }
+    window.localStorage.setItem(lastTimeoutKey, now.toString());
+    
+    // 清理旧的超时记录（保留最近10个）
+    const timeoutKeys = Object.keys(window.localStorage).filter(key => key.startsWith('timeout_'));
+    if (timeoutKeys.length > 10) {
+      timeoutKeys.slice(0, -10).forEach(key => window.localStorage.removeItem(key));
+    }
+    
+    // 播放超时音效
+    if (soundEnabled) {
+      playGameSound(GameSoundType.BUTTON_NEGATIVE);
+    }
+    
+    // 添加通知
+    addNotification({
+      type: 'warning',
+      title: '回合超时',
+      message: `${currentPlayer.name} 超时，自动抽牌`,
+      duration: 3000
+    });
+    
+    // 自动抽牌
+    handleDrawCard();
+  };
+
   // 获取玩家布局位置
   const getPlayerLayout = () => {
     const players = gameState.players;
@@ -461,6 +498,16 @@ export const GameBoard: React.FC<GameBoardProps> = ({
                 {gameState.turnCount}
               </div>
             </div>
+            
+            {/* 倒计时器 */}
+            {gameSettings?.enableTurnTimer && (
+              <TurnTimer
+                isActive={isCurrentPlayerHuman && !!currentPlayer}
+                timeLimit={gameSettings?.turnTimeLimit || 30}
+                onTimeout={handleTurnTimeout}
+                soundEnabled={soundEnabled}
+              />
+            )}
             
             {/* 游戏方向指示器 */}
             <div className="flex items-center gap-2 bg-gradient-to-r from-blue-100 to-indigo-100 px-4 py-3 rounded-xl border-2 border-blue-300 shadow-md hover:shadow-lg transition-all duration-200">

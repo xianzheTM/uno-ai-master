@@ -54,6 +54,8 @@ export const GameSetup: React.FC<GameSetupProps> = ({
     enableUnoCheck: true,
     enableSounds: true,
     gameSpeed: 'normal' as 'slow' | 'normal' | 'fast',
+    turnTimeLimit: 30, // 回合时间限制（秒）
+    enableTurnTimer: true, // 是否启用回合计时器
   });
 
   const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
@@ -254,7 +256,7 @@ export const GameSetup: React.FC<GameSetupProps> = ({
         {/* 基础游戏设置 */}
         <div className="mb-6">
           <h2 className="text-xl font-semibold mb-4 text-gray-700">游戏设置</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-600 mb-2">
                 初始手牌数量
@@ -285,7 +287,35 @@ export const GameSetup: React.FC<GameSetupProps> = ({
               </select>
             </div>
 
+            <div>
+              <label className="block text-sm font-medium text-gray-600 mb-2">
+                回合时间限制
+              </label>
+              <select
+                value={gameSettings.turnTimeLimit}
+                onChange={(e) => setGameSettings(prev => ({ ...prev, turnTimeLimit: parseInt(e.target.value) }))}
+                className="w-full px-3 py-2 border rounded"
+                disabled={!gameSettings.enableTurnTimer}
+              >
+                <option value={15}>15秒</option>
+                <option value={30}>30秒</option>
+                <option value={45}>45秒</option>
+                <option value={60}>60秒</option>
+                <option value={120}>2分钟</option>
+              </select>
+            </div>
+
             <div className="flex flex-col gap-2">
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={gameSettings.enableTurnTimer}
+                  onChange={(e) => setGameSettings(prev => ({ ...prev, enableTurnTimer: e.target.checked }))}
+                  className="rounded"
+                />
+                <span className="text-sm text-gray-600">启用回合倒计时</span>
+              </label>
+              
               <label className="flex items-center gap-2">
                 <input
                   type="checkbox"
@@ -347,6 +377,8 @@ export const GameSetup: React.FC<GameSetupProps> = ({
                 <p>• 困难AI会记住已出的牌并进行策略分析</p>
                 <p>• UNO宣告检查可以让游戏更有挑战性</p>
                 <p>• AI名字会根据难度自动生成，但可以手动修改</p>
+                <p>• 回合倒计时只对人类玩家生效，超时将自动抽牌</p>
+                <p>• 倒计时在最后10秒和5秒时会播放警告音效</p>
               </div>
             </div>
           )}
